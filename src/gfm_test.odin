@@ -10,7 +10,7 @@ tables :: proc(src: string) -> string {
 	w.scratch = context.temp_allocator
 
 	lines := split_source_lines(src, context.temp_allocator)
-	return build_tables(w, lines, context.temp_allocator)
+	return assemble_blocks(w, lines, context.temp_allocator)
 }
 
 @(test)

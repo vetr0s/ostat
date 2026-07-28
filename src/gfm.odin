@@ -52,44 +52,8 @@ replace_strikethrough :: proc(text: string, allocator := context.allocator) -> s
 	return strings.to_string(b)
 }
 
-// Joins the line list back into one source string, converting any table it
-// finds on the way through.
-build_tables :: proc(w: ^Website, lines: []Line, allocator := context.allocator) -> string {
-	b := strings.builder_make(allocator)
-
-	i := 0
-	for i < len(lines) {
-		if lines[i].fence {
-			strings.write_string(&b, lines[i].text)
-			strings.write_byte(&b, '\n')
-			i += 1
-			continue
-		}
-
-		aligns, rows, width, is_table := scan_table(lines, i)
-		if !is_table {
-			strings.write_string(&b, lines[i].text)
-			strings.write_byte(&b, '\n')
-			i += 1
-			continue
-		}
-
-		// An HTML block may not open mid-paragraph without a blank line
-		// before it, and the previous line is not always blank.
-		if strings.builder_len(b) > 0 && !strings.has_suffix(strings.to_string(b), "\n\n") {
-			strings.write_byte(&b, '\n')
-		}
-		write_table(w, &b, lines[i:i + rows], aligns)
-		strings.write_byte(&b, '\n')
-		i += rows
-	}
-
-	return strings.to_string(b)
-}
-
 // A table is a header row, a delimiter row with the same cell count, and any
 // number of body rows after it.
-@(private = "file")
 scan_table :: proc(
 	lines: []Line,
 	start: int,
@@ -180,7 +144,6 @@ split_row :: proc(text: string) -> []string {
 	return cells
 }
 
-@(private = "file")
 write_table :: proc(w: ^Website, b: ^strings.Builder, rows: []Line, aligns: []Align) {
 	strings.write_string(b, "<table>\n<thead>\n")
 	write_row(w, b, rows[0].text, aligns, "th")
