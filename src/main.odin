@@ -87,6 +87,7 @@ cmd_build :: proc(args: []string) -> bool {
 	parse_build_args(&w, args) or_return
 
 	collect_content(&w) or_return
+	render_content(&w) or_return
 	render_all(&w) or_return
 
 	fmt.printfln("built %d pages into %s", len(w.pages) + 1, w.opts.out_dir)

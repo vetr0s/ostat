@@ -19,7 +19,8 @@ invalidate them as it grows.
 Note :: struct {
 	label: string,
 	desc:  string, // markdown source
-	html:  string, // rendered inline html, filled in by render_notes
+	html:  string, // rendered inline html
+	used:  int,    // marker count, so an unreferenced definition can be caught
 }
 
 Page :: struct {
