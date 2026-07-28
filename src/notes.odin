@@ -183,11 +183,16 @@ next_note_number :: proc(p: ^Page) -> int {
 
 @(private = "file")
 write_margin_note :: proc(b: ^strings.Builder, note: Note) {
+	// No space before the marker. gingerBill writes an &nbsp; there, which
+	// renders as a visible gap: "note 1," rather than "note1,". Sitting flush
+	// against the word is also what stops it wrapping to a line on its own,
+	// since there is no break opportunity without whitespace.
+	//
 	// <input> is a void element, so it is written self-closing rather than
 	// with the closing tag gingerBill's generator emits.
 	fmt.sbprintf(
 		b,
-		`&nbsp;<label for="%s%s" class="margin-toggle sidenote-number"></label>` +
+		`<label for="%s%s" class="margin-toggle sidenote-number"></label>` +
 		`<input type="checkbox" id="%s%s" class="margin-toggle">` +
 		`<span class="sidenote">%s</span>`,
 		NOTE_ID_PREFIX,

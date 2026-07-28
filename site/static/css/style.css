@@ -36,16 +36,26 @@
 
     /* The prose column. Nothing but a margin note may sit outside it.
 
-       An 80ch column plus a gutter needs about a 990px window before the
-       notes have anywhere to go, which is wider than most people browse. 60ch
-       is a better measure for reading anyway, and it brings the notes into
-       view on an ordinary laptop. */
-    --measure: 60ch;
+       The measure and the gutter compete for the same window. A char here is
+       10.86px, so every 1ch of prose costs a window 10.86px wider before a
+       note has anywhere to go:
 
-    /* The gutter a margin note floats into, and the space before it. Both in
-       ch, so the whole layout still scales off the one root font-size. */
-    --sidenote-width: 26ch;
-    --sidenote-gap: 3ch;
+           68ch prose -> notes float at about 1035px
+           72ch       -> 1080px
+           80ch       -> 1165px
+
+       72ch keeps the notes in the margin at an ordinary laptop width. Widen
+       it if you browse maximised, and move the media query at the foot of the
+       margin-note section by the same amount. */
+    --measure: 72ch;
+
+    /* In rem, not ch. A note is set at 0.78em, and ch resolves against the
+       font of the element it is used on, so a width in ch would come out a
+       fifth narrower than the space reserved for it here and the arithmetic
+       below would quietly over-reserve. A note is apparatus, not a second
+       column: 13rem holds a sentence or two without taking the page over. */
+    --sidenote-width: 13rem;
+    --sidenote-gap: 1.5rem;
 
     /* Prose plus gutter. main is sized from this, and the container query
        that decides whether a note can float uses the same number. */
@@ -222,13 +232,12 @@ header {
 
 /* Wide enough for the prose plus the gutter beside it. Everything except a
    margin note is still held to the measure, so the text does not move. */
+/* No container-type here, however much a container query would suit the job
+   below. container-type applies style containment, style containment scopes
+   counters, and every margin note then came out numbered 1. */
 main {
     max-width: calc(var(--layout-width) + var(--pad) * 2);
     padding: var(--space-md) var(--pad);
-
-    /* Makes main queryable, so a margin note asks how much room the column
-       actually has rather than how wide the window is. */
-    container-type: inline-size;
 }
 
 /* Sections do not contain their floats. The portrait hangs past the contact
@@ -336,16 +345,19 @@ input.margin-toggle { display: none; }
 /* No gutter to float into. The marker becomes the toggle and the note folds
    into the prose under it.
 
-   This asks main how wide it is, not the window, so padding and the window
-   chrome are already accounted for. The threshold is --layout-width less a
-   char, the char being slack against sub-pixel rounding at exactly full
-   width.
+   KEEP THIS IN STEP WITH THE THREE LENGTHS ABOVE. A query cannot read a
+   custom property, so the number is written out, and ch is not available to
+   a media query either. The layout needs
+       measure + gap + note + 2 x pad
+   A char of system-ui at this body size measures 10.86px, so 72ch is 782px;
+   plus 24px of gap, 208px of note, and 64px of padding, that is 1078px. The
+   threshold is rounded up to 68em, or 1088px, so the last few pixels of the
+   gutter are never squeezed.
 
-   KEEP THIS IN STEP WITH --measure. A query cannot read a custom property,
-   so the number is written out. Set it too high and main can never reach it,
-   which means notes never leave the fold. The sum is measure + gap + width:
-   60 + 3 + 26 = 89, less one. */
-@container (max-width: 88ch) {
+   Measured in the browser rather than assumed. Change --measure and this
+   number goes stale; notes then either fold when there was room or float
+   when there was not. */
+@media (max-width: 68em) {
     .sidenote {
         display: none;
         float: none;
