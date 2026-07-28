@@ -1,0 +1,427 @@
+/* The whole stylesheet. No build step and no preprocessor.
+   The page is one left-aligned column capped at --measure. Every length is
+   font-relative, the measure in ch and the spacing in rem, so the root
+   font-size scales the layout the way browser zoom does. Colors are the Modus
+   palettes, switched by light-dark() against the user's color-scheme. Asides
+   are footnotes, so nothing floats beside the prose and there is no gutter.
+   Order below: tokens, base, code, type, layout, nav, footnotes, figures,
+   lists, tables. */
+
+/* Modus Operandi light, Modus Vivendi dark. */
+:root {
+    color-scheme: light dark;
+
+    --color-bg:           light-dark(#ffffff, #000000);
+    --color-surface:      light-dark(#f2f2f2, #1e1e1e);
+    --color-text:         light-dark(#000000, #ffffff);
+    --color-muted:        light-dark(#595959, #989898);
+    --color-border:       light-dark(#c4c4c4, #535353);
+    --color-link:         light-dark(#0031a9, #2fafff);
+    --color-link-hover:   light-dark(#005e8b, #00d3d0);
+    --color-heading-1:    light-dark(#884900, #fec43f);
+    --color-heading-2:    light-dark(#721045, #feacd0);
+    --color-heading-3:    light-dark(#005e8b, #00d3d0);
+    --magenta:            light-dark(#721045, #feacd0);
+
+    /* System fonts only. Nothing downloads and nothing swaps in later. */
+    --font-sans:  system-ui, -apple-system, "Segoe UI", "Noto Sans", sans-serif;
+    --font-mono:  ui-monospace, "Hack", "DejaVu Sans Mono", monospace;
+
+    --space-xs: 0.35rem;
+    --space-sm: 0.7rem;
+    --space-md: 1.1rem;
+    --space-lg: 1.5rem;
+
+    /* One column. Asides are footnotes, so nothing sits beside the prose. */
+    --measure: 80ch;
+
+    /* The left inset. Header and footer span the window. Only what is
+       inside them is held to this. */
+    --pad: 1.25rem;
+}
+
+@media (min-width: 48em) {
+    :root { --pad: 2rem; }
+}
+
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark;  }
+
+/* Base */
+
+/* Sized from the root. The measure is in ch and the spacing in rem, so this
+   one number scales the layout the way browser zoom does. */
+html {
+    font-size: 120%;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    /* White on black reads thinner at the same weight. Half a step up from
+       regular holds its colour. */
+    font-weight: 450;
+    color: var(--color-text);
+    background: var(--color-bg);
+    margin: 0;
+    padding: 0;
+    /* Loose leading spreads the same ink over more page. A paragraph then
+       reads as a grey field rather than a block of white. */
+    line-height: 1.4;
+}
+
+/* Code */
+
+code, pre, kbd, samp {
+    font-family: var(--font-mono);
+    font-size: 0.889em;
+}
+
+code {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    padding: 0.1em 0.3em;
+}
+
+pre {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    padding: 0.75em 0.9em;
+    max-width: var(--measure);
+    margin-block: var(--space-sm);
+    overflow-x: auto;
+    line-height: 1.45;
+}
+
+/* Inside a block, the surface and border belong to the <pre>, not each token. */
+pre code {
+    background: none;
+    border: 0;
+    padding: 0;
+    font-size: 1em;
+}
+
+hr {
+    max-width: var(--measure);
+    margin-block: var(--space-lg);
+    border: 0;
+    border-block-start: 1px solid var(--color-border);
+}
+
+blockquote {
+    max-width: var(--measure);
+    margin-block: var(--space-sm);
+    padding-inline-start: 1em;
+    border-inline-start: 3px solid var(--color-border);
+    color: var(--color-muted);
+}
+
+/* Chroma writes these token classes. The colors are Modus accents. A block
+   reads the same way in either theme. */
+.chroma                       { background: none; }
+.chroma .k,  .chroma .kd,
+.chroma .kn, .chroma .kr      { color: light-dark(#5317ac, #b6a0ff); } /* keyword */
+.chroma .kt, .chroma .nc,
+.chroma .nn                   { color: light-dark(#005e8b, #00d3d0); } /* type, namespace */
+.chroma .s,  .chroma .s1,
+.chroma .s2, .chroma .sb,
+.chroma .sc, .chroma .sd      { color: light-dark(#2544bb, #79a8ff); } /* string */
+.chroma .m,  .chroma .mi,
+.chroma .mf, .chroma .mh      { color: light-dark(#0000c0, #00bcff); } /* number */
+.chroma .nf, .chroma .nd      { color: light-dark(#721045, #feacd0); } /* function */
+.chroma .nb, .chroma .bp      { color: light-dark(#884900, #fec43f); } /* builtin */
+.chroma .c,  .chroma .c1,
+.chroma .cm, .chroma .cs      { color: var(--color-muted); font-style: italic; }
+.chroma .err                  { color: light-dark(#a60000, #ff8059); }
+
+/* Modular scale, ratio 1.2, one step down from browser-default drama. */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    line-height: 1.25;
+    margin-block: var(--space-md) var(--space-xs);
+    font-weight: 600;
+}
+
+h1 {
+    font-size: 1.728rem;
+    color: var(--color-heading-1);
+    margin-block-start: 0;
+    /* A heading starts at the left margin. A float from the section above
+       never indents it. */
+    clear: both;
+}
+h2 { font-size: 1.44rem; color: var(--color-heading-2); }
+h3 { font-size: 1.2rem;  color: var(--color-heading-3); }
+h4 { font-size: 1rem; }
+
+p {
+    margin-block-end: var(--space-sm);
+    max-width: var(--measure);
+}
+
+/* reset.css clears list-style globally. Restore it for prose. */
+main ul, main ol {
+    list-style: revert;
+    padding-inline-start: 1.5em;
+    margin-block: var(--space-sm);
+    max-width: var(--measure);
+}
+
+main li { margin-block-end: 0.25em; }
+
+/* Dateline under a post title. */
+article > time {
+    display: block;
+    color: var(--color-muted);
+    font-size: 0.875rem;
+    margin-block-end: var(--space-md);
+}
+
+/* Underlined, the way a link looks when nobody has styled it. */
+a         { color: var(--color-link); text-decoration: underline; }
+a:hover   { color: var(--color-link-hover); text-decoration-style: dashed; }
+
+/* Layout */
+
+/* Three bands. Header and footer span the window. Main is capped at the
+   measure, and everything inside stays left aligned. */
+
+header {
+    padding: var(--space-md) var(--pad) var(--space-xs);
+    border-block-end: 1px solid var(--color-border);
+}
+
+/* The bar spans the header. Its toggle lands at the window's right edge. */
+.crumbs { max-width: none; }
+
+main {
+    max-width: calc(var(--measure) + var(--pad) * 2);
+    padding: var(--space-md) var(--pad);
+}
+
+/* Sections do not contain their floats. The portrait hangs past the contact
+   list instead of stretching the section to its height. */
+section {
+    margin-block-end: var(--space-lg);
+}
+
+section:last-child { margin-block-end: 0; }
+
+footer {
+    clear: both;
+    margin-block-start: var(--space-lg);
+    padding: var(--space-sm) var(--pad) var(--space-lg);
+    border-block-start: 1px solid var(--color-border);
+    color: var(--color-muted);
+    font-size: 0.875rem;
+}
+
+footer p { max-width: var(--measure); margin: 0; }
+
+/* Navigation
+   The same bar on every page. There is no menu. Home is the way in. */
+
+.accent { color: var(--magenta); }
+
+.crumbs {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    font-size: 0.875rem;
+    color: var(--color-muted);
+}
+
+.crumbs .trail  { margin: 0; max-width: none; }
+.crumbs .sep    { padding-inline: 0.4em; }
+.crumbs .here   { color: var(--color-muted); }
+.crumbs a       { text-decoration: none; }
+.crumbs a:hover { text-decoration: dashed underline 1px; }
+
+#theme-toggle {
+    background: none;
+    border: none;
+    color: var(--color-link);
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
+}
+
+#theme-toggle:hover { color: var(--color-link-hover); }
+
+/* Footnotes */
+
+/* The marker takes no leading of its own. A paragraph with notes sets to the
+   same rhythm as one without. */
+.fn-ref {
+    font-size: 0.7em;
+    font-weight: 600;
+    line-height: 0;
+    vertical-align: super;
+    margin-inline-start: 0.1em;
+}
+
+/* A marker points to the bottom of this page, not away from it. Link blue
+   would make it compete with the prose. */
+.fn-ref a        { color: var(--color-muted); text-decoration: none; }
+.fn-ref a:hover  { color: var(--color-link-hover); }
+
+/* Apparatus, not prose. --measure is in ch, so the block stays at body size
+   and only the list shrinks, or the rule would stop short of a prose line. */
+.footnotes {
+    max-width: var(--measure);
+    margin-block-start: var(--space-lg);
+    padding-block-start: var(--space-sm);
+    border-block-start: 1px solid var(--color-border);
+    color: var(--color-muted);
+    line-height: 1.45;
+}
+
+.footnotes ol {
+    list-style: decimal;
+    padding-inline-start: 1.7em;
+    margin: 0;
+    max-width: none;
+    font-size: 0.78em;
+}
+
+.footnotes li             { margin-block-end: 0.4em; }
+.footnotes li:last-child  { margin-block-end: 0; }
+.footnotes p              { max-width: none; }
+
+/* A note is often mostly link. At full blue the list becomes a wall of it. */
+.footnotes a        { color: inherit; text-decoration: underline; }
+.footnotes a:hover  { color: var(--color-link-hover); }
+
+/* The note you landed on comes up to full text color. */
+.footnotes li:target { color: var(--color-text); }
+
+.footnotes .fn-back { margin-inline-start: 0.3em; text-decoration: none; }
+
+/* Well short of the measure. A picture at full column stops illustrating the
+   prose and becomes the page. */
+figure {
+    margin: var(--space-md) 0;
+    max-width: 24rem;
+}
+
+/* A bare markdown image gets the same cap. Goldmark wraps it in a <p>. */
+main p > img { max-width: 24rem; }
+
+figcaption {
+    margin-block-start: 0.35rem;
+    color: var(--color-muted);
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+
+/* Sized to the contact list beside it. A taller picture would leave dead
+   space under the list. */
+.portrait img {
+    display: block;
+    width: 7rem;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--color-border);
+}
+
+/* The page is left aligned, so the portrait goes left. It sits after the
+   heading in the markup so only the list moves over. */
+@media (min-width: 40em) {
+    .portrait {
+        float: left;
+        clear: left;
+        margin: 0.2rem var(--space-lg) var(--space-sm) 0;
+    }
+}
+
+/* A heading with something pinned to the right of it. The h1 keeps its own
+   bottom margin, so the row does not add one. */
+.section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    max-width: var(--measure);
+}
+
+/* Small enough to read as apparatus beside the heading rather than as a call
+   to action competing with it. */
+.rss-badge {
+    flex: none;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    text-decoration: none;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    padding: 0.2em 0.5em;
+}
+
+.rss-badge:hover {
+    color: var(--color-link-hover);
+    border-color: var(--color-link-hover);
+    text-decoration: none;
+}
+
+/* Contact list */
+
+.contact-list {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.25em 1em;
+    margin: 0;
+    max-width: var(--measure);
+}
+
+.contact-list dt          { color: var(--color-muted); }
+.contact-list dt::after   { content: ":"; }
+.contact-list dd          { margin: 0; }
+
+/* Tables */
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: var(--measure);
+    margin-block: var(--space-md);
+}
+
+th, td {
+    border: 1px solid var(--color-border);
+    padding: 0.4em 0.7em;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    background: var(--color-surface);
+    font-weight: 600;
+}
+
+/* Post listing. Leader dots, like a table of contents. */
+
+.post-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5em;
+    max-width: var(--measure);
+    margin-block-end: 0.4em;
+}
+
+.post-entry > a    { order: 1; }
+.post-entry > time { order: 3; white-space: nowrap; color: var(--color-muted); }
+
+.empty { color: var(--color-muted); }
+
+.post-entry::after {
+    content: "";
+    order: 2;
+    flex: 1;
+    border-bottom: 2px dotted var(--color-muted);
+    position: relative;
+    top: -0.25em;
+}

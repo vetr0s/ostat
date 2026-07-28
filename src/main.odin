@@ -1,0 +1,170 @@
+package main
+
+import "base:runtime"
+import "core:fmt"
+import "core:mem/virtual"
+import "core:os"
+import "core:strings"
+import "core:time"
+
+VERSION :: "0.1.0"
+
+USAGE :: `ostat - a static site generator
+
+usage:
+    ostat build [site-dir]      build a site into an output directory
+    ostat new <path>            create a page from the archetype
+    ostat version               print the version
+
+build options:
+    -o <dir>          output directory (default: public)
+    -drafts           include pages marked draft
+    -future           include pages dated after today
+    -base-url <url>   override the configured base URL
+
+site-dir defaults to the current directory. It must contain content/, and may
+contain static/.
+`
+
+Options :: struct {
+	site_dir: string,
+	out_dir:  string,
+	drafts:   bool,
+	future:   bool,
+	base_url: string,
+}
+
+Website :: struct {
+	perm_arena:    virtual.Arena,
+	scratch_arena: virtual.Arena,
+	perm:          runtime.Allocator,
+	scratch:       runtime.Allocator,
+
+	config:        Site_Config,
+	opts:          Options,
+	today:         string, // "2026-07-27", for the -future cutoff
+
+	pages:         [dynamic]^Page,
+	articles:      [dynamic]^Page, // blog posts, newest first
+	sections:      map[string]^Page,
+}
+
+main :: proc() {
+	if !run(os.args) {
+		os.exit(1)
+	}
+}
+
+run :: proc(args: []string) -> bool {
+	if len(args) < 2 {
+		fmt.eprint(USAGE)
+		return false
+	}
+
+	switch args[1] {
+	case "build":
+		return cmd_build(args[2:])
+	case "new":
+		return cmd_new(args[2:])
+	case "version":
+		fmt.println("ostat", VERSION)
+		return true
+	case "help", "-h", "--help":
+		fmt.print(USAGE)
+		return true
+	}
+
+	fmt.eprintfln("ostat: unknown command %q", args[1])
+	fmt.eprint(USAGE)
+	return false
+}
+
+cmd_build :: proc(args: []string) -> bool {
+	w: Website
+	website_init(&w) or_return
+	defer website_destroy(&w)
+
+	parse_build_args(&w, args) or_return
+
+	collect_content(&w) or_return
+	render_all(&w) or_return
+
+	fmt.printfln("built %d pages into %s", len(w.pages) + 1, w.opts.out_dir)
+	return true
+}
+
+@(private = "file")
+parse_build_args :: proc(w: ^Website, args: []string) -> bool {
+	w.opts.out_dir = "public"
+
+	i := 0
+	for i < len(args) {
+		arg := args[i]
+		switch arg {
+		case "-o":
+			i += 1
+			if i >= len(args) {
+				fmt.eprintln("ostat: -o needs a directory")
+				return false
+			}
+			w.opts.out_dir = args[i]
+		case "-base-url":
+			i += 1
+			if i >= len(args) {
+				fmt.eprintln("ostat: -base-url needs a url")
+				return false
+			}
+			w.opts.base_url = args[i]
+		case "-drafts":
+			w.opts.drafts = true
+		case "-future":
+			w.opts.future = true
+		case:
+			if strings.has_prefix(arg, "-") {
+				fmt.eprintfln("ostat: unknown option %q", arg)
+				return false
+			}
+			if w.opts.site_dir != "" {
+				fmt.eprintln("ostat: build takes at most one site directory")
+				return false
+			}
+			w.opts.site_dir = arg
+		}
+		i += 1
+	}
+
+	if w.opts.site_dir == "" {
+		w.opts.site_dir = "."
+	}
+	if w.opts.base_url != "" {
+		w.config.base_url = w.opts.base_url
+	}
+	return true
+}
+
+website_init :: proc(w: ^Website) -> bool {
+	if err := virtual.arena_init_growing(&w.perm_arena); err != nil {
+		fmt.eprintfln("ostat: arena: %v", err)
+		return false
+	}
+	if err := virtual.arena_init_growing(&w.scratch_arena); err != nil {
+		fmt.eprintfln("ostat: arena: %v", err)
+		return false
+	}
+	w.perm = virtual.arena_allocator(&w.perm_arena)
+	w.scratch = virtual.arena_allocator(&w.scratch_arena)
+
+	w.config = DEFAULT_SITE
+	w.pages = make([dynamic]^Page, w.perm)
+	w.articles = make([dynamic]^Page, w.perm)
+	w.sections = make(map[string]^Page, allocator = w.perm)
+
+	y, m, d := time.date(time.now())
+	w.today = fmt.aprintf("%04d-%02d-%02d", y, int(m), d, allocator = w.perm)
+	return true
+}
+
+website_destroy :: proc(w: ^Website) {
+	virtual.arena_destroy(&w.scratch_arena)
+	virtual.arena_destroy(&w.perm_arena)
+}
