@@ -410,13 +410,14 @@ figcaption {
     }
 }
 
-/* A heading with something pinned to the right of it. The h1 keeps its own
-   bottom margin, so the row does not add one. */
+/* A heading with the feed link beside it. It used to be pinned to the far
+   right of the measure, which at this width left it stranded most of a column
+   away from the words it belongs to. It sits next to the heading now. The h1
+   keeps its own bottom margin, so the row does not add one. */
 .section-head {
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-sm);
+    gap: var(--space-md);
     max-width: var(--measure);
 }
 
