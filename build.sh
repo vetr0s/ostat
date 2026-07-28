@@ -43,16 +43,22 @@ esac
 # vendor:commonmark links "system:cmark", and Homebrew's lib directory is not
 # on the default linker path. If you see "library not found for -lcmark",
 # run: brew install cmark
-LINK_FLAGS=""
+#
+# An array, and empty when the library is somewhere the linker already looks,
+# as it is on Linux. Passing -extra-linker-flags with an empty value is an
+# error rather than a no-op.
+LINK=()
 for dir in /opt/homebrew/lib /usr/local/lib; do
     if [ -e "$dir/libcmark.dylib" ] || [ -e "$dir/libcmark.so" ]; then
-        LINK_FLAGS="-L$dir"
+        LINK=(-extra-linker-flags:"-L$dir")
         break
     fi
 done
 
+# The ${LINK[@]+...} guard is for bash 3.2, which is what macOS ships and
+# which treats an empty array as unset under `set -u`.
 if [ "$MODE" = "test" ]; then
-    odin test "$SRC" "${FLAGS[@]}" -extra-linker-flags:"$LINK_FLAGS" 2>&1 \
+    odin test "$SRC" "${FLAGS[@]}" ${LINK[@]+"${LINK[@]}"} 2>&1 \
         | sed -E 's/^(.+)\(([0-9]+):([0-9]+)\)/\1:\2:\3/'
     exit "${PIPESTATUS[0]}"
 fi
@@ -60,7 +66,7 @@ fi
 mkdir -p "$OUT_DIR"
 
 odin build "$SRC" -out:"$OUT_DIR/$NAME" "${FLAGS[@]}" \
-    -extra-linker-flags:"$LINK_FLAGS" 2>&1 \
+    ${LINK[@]+"${LINK[@]}"} 2>&1 \
     | sed -E 's/^(.+)\(([0-9]+):([0-9]+)\)/\1:\2:\3/'
 
 echo "built $OUT_DIR/$NAME"
