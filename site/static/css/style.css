@@ -9,6 +9,41 @@
    Order below: tokens, base, code, type, layout, nav, margin notes, figures,
    lists, tables. */
 
+/* ET Book, Tufte's Bembo digitisation and the face gingerBill.org is set in.
+   Self-hosted from static/font; MIT, notice beside the files.
+
+   font-display: optional, not the swap that Tufte CSS and gingerBill both
+   use. swap guarantees a visible change: fallback first, then the real face
+   drops in under the reader's eyes. optional instead lets the browser use the
+   face only if it is ready by first paint and skip it for that load
+   otherwise, so the text never reflows mid-sentence. The preload in the head
+   is what makes ready-in-time the usual case, and after one visit it is
+   cached and always is. The cost is that a cold visit on a slow line reads in
+   Palatino, which is a fair thing to fall back to. */
+@font-face {
+    font-family: "ET Book";
+    src: url("/font/et-book-roman-line-figures.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: optional;
+}
+
+@font-face {
+    font-family: "ET Book";
+    src: url("/font/et-book-display-italic-old-style-figures.woff2") format("woff2");
+    font-weight: 400;
+    font-style: italic;
+    font-display: optional;
+}
+
+@font-face {
+    font-family: "ET Book";
+    src: url("/font/et-book-bold-line-figures.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: optional;
+}
+
 /* Modus Operandi light, Modus Vivendi dark. */
 :root {
     color-scheme: light dark;
@@ -25,8 +60,10 @@
     --color-heading-3:    light-dark(#005e8b, #00d3d0);
     --magenta:            light-dark(#721045, #feacd0);
 
-    /* System fonts only. Nothing downloads and nothing swaps in later. */
-    --font-sans:  system-ui, -apple-system, "Segoe UI", "Noto Sans", sans-serif;
+    /* The fallbacks are the same ones Tufte CSS names, and they matter here:
+       under font-display: optional a cold first visit reads in Palatino. */
+    --font-body:  "ET Book", Palatino, "Palatino Linotype", "Palatino LT STD",
+                  "Book Antiqua", Georgia, serif;
     --font-mono:  ui-monospace, "Hack", "DejaVu Sans Mono", monospace;
 
     --space-xs: 0.35rem;
@@ -36,17 +73,17 @@
 
     /* The prose column. Nothing but a margin note may sit outside it.
 
-       The measure and the gutter compete for the same window. A char here is
-       10.86px, so every 1ch of prose costs a window 10.86px wider before a
-       note has anywhere to go:
+       In ch, so it is a count of characters and holds its reading width
+       whatever the face. The px it costs does change: a char of ET Book at
+       this size is 9.78px, against 10.86px for the system sans it replaced,
+       so the same 72 characters now ask for a window about 80px narrower.
 
-           68ch prose -> notes float at about 1035px
-           72ch       -> 1080px
-           80ch       -> 1165px
+           72ch prose -> notes float at about 1000px
+           80ch       -> 1080px
+           88ch       -> 1160px
 
-       72ch keeps the notes in the margin at an ordinary laptop width. Widen
-       it if you browse maximised, and move the media query at the foot of the
-       margin-note section by the same amount. */
+       Widen it if you browse maximised, and move the media query at the foot
+       of the margin-note section by the same amount. */
     --measure: 72ch;
 
     /* In rem, not ch. A note is set at 0.78em, and ch resolves against the
@@ -85,11 +122,15 @@ html {
 }
 
 body {
-    font-family: var(--font-sans);
-    font-size: 1.0625rem;
-    /* White on black reads thinner at the same weight. Half a step up from
-       regular holds its colour. */
-    font-weight: 450;
+    font-family: var(--font-body);
+    /* ET Book has a small x-height, so it sets optically smaller than a UI
+       sans at the same size. Tufte CSS answers this with 1.4rem; 1.25 is
+       enough here because the measure is narrower than his. */
+    font-size: 1.25rem;
+    /* 400, not the half step the system sans was given. Only the roman and
+       bold cuts are loaded, so anything between them either rounds back to
+       400 or gets synthesised into a smeared fake bold. */
+    font-weight: 400;
     color: var(--color-text);
     background: var(--color-bg);
     margin: 0;
@@ -169,7 +210,7 @@ blockquote {
 
 /* Modular scale, ratio 1.2, one step down from browser-default drama. */
 h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     line-height: 1.25;
     margin-block: var(--space-md) var(--space-xs);
     font-weight: 600;
@@ -349,15 +390,16 @@ input.margin-toggle { display: none; }
    custom property, so the number is written out, and ch is not available to
    a media query either. The layout needs
        measure + gap + note + 2 x pad
-   A char of system-ui at this body size measures 10.86px, so 72ch is 782px;
-   plus 24px of gap, 208px of note, and 64px of padding, that is 1078px. The
-   threshold is rounded up to 68em, or 1088px, so the last few pixels of the
+   A char of ET Book at this body size measures 9.78px, so 72ch is 704px;
+   plus 24px of gap, 208px of note, and 64px of padding, that is 1000px. The
+   threshold is rounded up to 64em, or 1024px, so the last few pixels of the
    gutter are never squeezed.
 
-   Measured in the browser rather than assumed. Change --measure and this
-   number goes stale; notes then either fold when there was room or float
-   when there was not. */
-@media (max-width: 68em) {
+   Measured in the browser rather than assumed, and remeasured when the face
+   changed, because ch is a property of the font. Change --measure, the body
+   size, or the family, and this number goes stale; notes then either fold
+   when there was room or float when there was not. */
+@media (max-width: 64em) {
     .sidenote {
         display: none;
         float: none;

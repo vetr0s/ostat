@@ -18,12 +18,23 @@ The tools and influences behind this site.
 
 ## Typography
 
-The site loads no web fonts. Every typeface here is one your machine already
-has. Text renders on the first paint. Nothing extra downloads, and no fallback
-font swaps itself out a moment later.
+The site is set in [ET Book](https://github.com/edwardtufte/et-book), the
+digital Bembo cut for Edward Tufte's books and the face
+[Tufte CSS](https://edwardtufte.github.io/tufte-css/) ships. It is served from
+this domain in three weights: roman, italic, and bold.
 
-- Body and headings: `system-ui`, then `-apple-system`, `Segoe UI`, `Noto Sans`
+- Body and headings: `ET Book`, then `Palatino`, `Book Antiqua`, `Georgia`
 - Code: `ui-monospace`, then `Hack`, `DejaVu Sans Mono`
+
+It used to load no web fonts at all, on the grounds that nothing should
+download and nothing should swap under you mid-sentence. The second half of
+that still holds; it is the reason the face is declared `font-display:
+optional` rather than the `swap` that Tufte CSS and most of the web use. Under
+`optional` a browser uses the face if it has it by the first paint and ignores
+it for that page otherwise. It never trades one typeface for another while you
+are reading. The roman cut is preloaded, so having it in time is the ordinary
+case, and after one visit it is cached. Arrive cold on a slow line and you read
+in Palatino, which is a decent thing to be mistaken for.
 
 Headings are set semibold on a 1.2 modular scale. That is one step down from the
 sizes a browser picks on its own.
@@ -38,10 +49,11 @@ document, not a poster.
 Every length here is font-relative: the measure in `ch`, the spacing in `rem`.
 One number scales the whole layout the way your browser's zoom does.
 
-Body text is set a half step above regular. White on black reads thinner than
-black on white at the same weight. The leading is kept tight for the same
-reason. Spread the same ink over more page and a paragraph turns into a grey
-field instead of a block of white.
+Body text runs a step above what a UI face would need. ET Book has a small
+x-height and sets optically smaller than a sans at the same size, so the same
+number tuned for one is too little for the other. The leading is kept tight:
+spread the same ink over more page and a paragraph turns into a grey field
+instead of a block of white.
 
 ## Layout
 
