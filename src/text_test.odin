@@ -2,15 +2,6 @@ package main
 
 import "core:testing"
 
-@(private = "file")
-config_website :: proc() -> ^Website {
-	w := new(Website, context.temp_allocator)
-	w.perm = context.temp_allocator
-	w.scratch = context.temp_allocator
-	w.config = DEFAULT_SITE
-	return w
-}
-
 @(test)
 test_html_escape :: proc(t: ^testing.T) {
 	out := html_escape(`a & b < c > d " e ' f`, context.temp_allocator)
@@ -41,7 +32,7 @@ test_first_paragraph :: proc(t: ^testing.T) {
 
 @(test)
 test_page_description_falls_back :: proc(t: ^testing.T) {
-	w := config_website()
+	w := test_website()
 
 	explicit := new(Page, w.perm)
 	explicit.description = "Set by hand."
@@ -58,7 +49,7 @@ test_page_description_falls_back :: proc(t: ^testing.T) {
 
 @(test)
 test_page_title :: proc(t: ^testing.T) {
-	w := config_website()
+	w := test_website()
 
 	home := new(Page, w.perm)
 	home.is_home = true
@@ -71,7 +62,7 @@ test_page_title :: proc(t: ^testing.T) {
 
 @(test)
 test_site_brand_and_lang :: proc(t: ^testing.T) {
-	w := config_website()
+	w := test_website()
 	testing.expect_value(t, site_brand(w, w.scratch), `vetr0s<span class="accent">.dev</span>`)
 	testing.expect_value(t, html_lang(w), "en")
 }
@@ -89,7 +80,7 @@ test_long_date :: proc(t: ^testing.T) {
 
 @(test)
 test_abs_url :: proc(t: ^testing.T) {
-	w := config_website()
+	w := test_website()
 	testing.expect_value(t, abs_url(w, "/blog/", w.scratch), "https://vetr0s.dev/blog/")
 	testing.expect_value(t, abs_url(w, "/", w.scratch), "https://vetr0s.dev/")
 }

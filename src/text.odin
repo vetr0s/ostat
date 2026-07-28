@@ -5,7 +5,8 @@ import "core:strings"
 
 // Escaping, truncation, and the date and title shapes the layouts need.
 
-MONTHS :: [13]string {
+@(rodata)
+MONTHS := [13]string {
 	"",
 	"January",
 	"February",
@@ -151,11 +152,10 @@ first_paragraph :: proc(html: string, allocator := context.allocator) -> string 
 
 // "2026-07-12" -> "July 12, 2026"
 long_date :: proc(p: ^Page, allocator := context.allocator) -> string {
-	months := MONTHS
 	if p.month < 1 || p.month > 12 {
 		return p.date
 	}
-	return fmt.aprintf("%s %d, %d", months[p.month], p.day, p.year, allocator = allocator)
+	return fmt.aprintf("%s %d, %d", MONTHS[p.month], p.day, p.year, allocator = allocator)
 }
 
 // "vetr0s.dev" -> `vetr0s<span class="accent">.dev</span>`

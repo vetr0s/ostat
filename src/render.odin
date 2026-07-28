@@ -22,6 +22,7 @@ render_all :: proc(w: ^Website) -> bool {
 	for p in w.pages {
 		render_page(w, p) or_return
 	}
+	render_feeds(w) or_return
 	copy_static(w) or_return
 	return true
 }
@@ -206,7 +207,6 @@ section_pages :: proc(w: ^Website, section: ^Page) -> []^Page {
 	return out[:]
 }
 
-@(private = "file")
 write_output :: proc(w: ^Website, rel, body: string) -> bool {
 	path := fmt.aprintf("%s/%s", w.opts.out_dir, rel, allocator = w.scratch)
 

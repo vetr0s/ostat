@@ -3,26 +3,6 @@ package main
 import "core:strings"
 import "core:testing"
 
-// The temp allocator stands in for both arenas. Nothing here outlives a test.
-@(private = "file")
-test_website :: proc() -> ^Website {
-	w := new(Website, context.temp_allocator)
-	w.perm = context.temp_allocator
-	w.scratch = context.temp_allocator
-	w.config = DEFAULT_SITE
-	return w
-}
-
-@(private = "file")
-test_page :: proc(w: ^Website, body: string) -> ^Page {
-	p := new(Page, w.perm)
-	p.source = "test.md"
-	p.title = "Test"
-	p.body = body
-	p.notes = make([dynamic]Note, w.perm)
-	return p
-}
-
 @(private = "file")
 run :: proc(body: string) -> (out: string, notes: []Note, ok: bool) {
 	w := test_website()

@@ -58,10 +58,17 @@ render_content :: proc(w: ^Website) -> bool {
 // sits relative to its definition. Inline rewrites run next, so that table
 // cells already carry their note markup and struck text by the time a cell is
 // rendered on its own.
-preprocess :: proc(w: ^Website, p: ^Page) -> (out: string, ok: bool) {
+preprocess :: proc(
+	w: ^Website,
+	p: ^Page,
+	style := Note_Style.Margin,
+) -> (
+	out: string,
+	ok: bool,
+) {
 	lines := split_source_lines(p.body, w.scratch)
 	lines = collect_notes(w, p, lines) or_return
-	apply_inline(w, p, lines) or_return
+	apply_inline(w, p, lines, style) or_return
 	return build_tables(w, lines, w.scratch), true
 }
 
@@ -89,12 +96,12 @@ is_fence_marker :: proc(text: string) -> bool {
 // Rewrites that apply within a single line: margin note markers, then
 // strikethrough.
 @(private = "file")
-apply_inline :: proc(w: ^Website, p: ^Page, lines: []Line) -> bool {
+apply_inline :: proc(w: ^Website, p: ^Page, lines: []Line, style: Note_Style) -> bool {
 	for &line in lines {
 		if line.fence {
 			continue
 		}
-		line.text = replace_note_markers(w, p, line.text) or_return
+		line.text = replace_note_markers(w, p, line.text, style) or_return
 		line.text = replace_strikethrough(line.text, w.scratch)
 	}
 	return check_notes_used(p)

@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:slice"
 import "core:strings"
 
 /*
@@ -26,6 +27,10 @@ NOTE_ID_PREFIX :: "sn-"
 // the lines that remain.
 collect_notes :: proc(w: ^Website, p: ^Page, lines: []Line) -> (kept: []Line, ok: bool) {
 	out := make([dynamic]Line, 0, len(lines), w.scratch)
+
+	// The feed renders each post a second time, so this starts from empty
+	// rather than appending to what the first pass found.
+	clear(&p.notes)
 
 	i := 0
 	for i < len(lines) {
@@ -110,9 +115,17 @@ validate_note_label :: proc(p: ^Page, label: string) -> bool {
 	return true
 }
 
-// Replaces every `[^label]` in a line with the Tufte markup. Emitted on one
-// line so that a marker inside a table cell stays inside its cell.
-replace_note_markers :: proc(w: ^Website, p: ^Page, text: string) -> (string, bool) {
+// Replaces every `[^label]` in a line. Emitted on one line so that a marker
+// inside a table cell stays inside its cell.
+replace_note_markers :: proc(
+	w: ^Website,
+	p: ^Page,
+	text: string,
+	style: Note_Style,
+) -> (
+	string,
+	bool,
+) {
 	if !strings.contains(text, MARKER_OPEN) {
 		return text, true
 	}
@@ -137,10 +150,21 @@ replace_note_markers :: proc(w: ^Website, p: ^Page, text: string) -> (string, bo
 			fmt.eprintfln("ostat: %s: note %q is used but never defined", p.source, label)
 			return "", false
 		}
+
+		// Numbering follows the markers, not the order the definitions were
+		// written, which is what the CSS counter does on the page.
 		note.used += 1
+		if note.number == 0 {
+			note.number = next_note_number(p)
+		}
 
 		strings.write_string(&b, rest[:start])
-		write_note_marker(&b, note^)
+		switch style {
+		case .Margin:
+			write_margin_note(&b, note^)
+		case .Endnote:
+			write_endnote_marker(w, &b, p, note^)
+		}
 		rest = after[close + 1:]
 	}
 
@@ -149,7 +173,16 @@ replace_note_markers :: proc(w: ^Website, p: ^Page, text: string) -> (string, bo
 }
 
 @(private = "file")
-write_note_marker :: proc(b: ^strings.Builder, note: Note) {
+next_note_number :: proc(p: ^Page) -> int {
+	highest := 0
+	for note in p.notes {
+		highest = max(highest, note.number)
+	}
+	return highest + 1
+}
+
+@(private = "file")
+write_margin_note :: proc(b: ^strings.Builder, note: Note) {
 	// <input> is a void element, so it is written self-closing rather than
 	// with the closing tag gingerBill's generator emits.
 	fmt.sbprintf(
@@ -163,6 +196,46 @@ write_note_marker :: proc(b: ^strings.Builder, note: Note) {
 		note.label,
 		note.html,
 	)
+}
+
+// Anchors are absolute: a feed item is read a long way from the page it came
+// from, so a bare fragment would resolve against the reader's own document.
+@(private = "file")
+write_endnote_marker :: proc(w: ^Website, b: ^strings.Builder, p: ^Page, note: Note) {
+	fmt.sbprintf(
+		b,
+		`<sup class="fn-ref" id="fnref-%d"><a href="%s#fn-%d" role="doc-noteref">%d</a></sup>`,
+		note.number,
+		page_permalink(w, p, w.scratch),
+		note.number,
+		note.number,
+	)
+}
+
+// The endnote list a feed item carries after its content.
+write_endnote_list :: proc(w: ^Website, b: ^strings.Builder, p: ^Page) {
+	if len(p.notes) == 0 {
+		return
+	}
+
+	permalink := page_permalink(w, p, w.scratch)
+	ordered := slice.clone(p.notes[:], w.scratch)
+	slice.sort_by(ordered, proc(a, b: Note) -> bool {
+		return a.number < b.number
+	})
+
+	strings.write_string(b, "\n<div class=\"footnotes\" role=\"doc-endnotes\">\n<ol>\n")
+	for note in ordered {
+		fmt.sbprintfln(
+			b,
+			`<li id="fn-%d">%s <a href="%s#fnref-%d">&#8617;</a></li>`,
+			note.number,
+			note.html,
+			permalink,
+			note.number,
+		)
+	}
+	strings.write_string(b, "</ol>\n</div>\n")
 }
 
 @(private = "file")
