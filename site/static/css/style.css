@@ -34,13 +34,22 @@
     --space-md: 1.1rem;
     --space-lg: 1.5rem;
 
-    /* The prose column. Nothing but a margin note may sit outside it. */
-    --measure: 80ch;
+    /* The prose column. Nothing but a margin note may sit outside it.
+
+       An 80ch column plus a gutter needs about a 990px window before the
+       notes have anywhere to go, which is wider than most people browse. 60ch
+       is a better measure for reading anyway, and it brings the notes into
+       view on an ordinary laptop. */
+    --measure: 60ch;
 
     /* The gutter a margin note floats into, and the space before it. Both in
        ch, so the whole layout still scales off the one root font-size. */
     --sidenote-width: 26ch;
     --sidenote-gap: 3ch;
+
+    /* Prose plus gutter. main is sized from this, and the container query
+       that decides whether a note can float uses the same number. */
+    --layout-width: calc(var(--measure) + var(--sidenote-gap) + var(--sidenote-width));
 
     /* The left inset. Header and footer span the window. Only what is
        inside them is held to this. */
@@ -214,10 +223,12 @@ header {
 /* Wide enough for the prose plus the gutter beside it. Everything except a
    margin note is still held to the measure, so the text does not move. */
 main {
-    max-width: calc(
-        var(--measure) + var(--sidenote-gap) + var(--sidenote-width) + var(--pad) * 2
-    );
+    max-width: calc(var(--layout-width) + var(--pad) * 2);
     padding: var(--space-md) var(--pad);
+
+    /* Makes main queryable, so a margin note asks how much room the column
+       actually has rather than how wide the window is. */
+    container-type: inline-size;
 }
 
 /* Sections do not contain their floats. The portrait hangs past the contact
@@ -325,10 +336,16 @@ input.margin-toggle { display: none; }
 /* No gutter to float into. The marker becomes the toggle and the note folds
    into the prose under it.
 
-   The threshold has to clear the whole layout, not just the prose: an 80ch
-   measure plus a 26ch gutter and its gap comes to about 990px once padding
-   is counted. Below that the note would float past the right edge. */
-@media (max-width: 64em) {
+   This asks main how wide it is, not the window, so padding and the window
+   chrome are already accounted for. The threshold is --layout-width less a
+   char, the char being slack against sub-pixel rounding at exactly full
+   width.
+
+   KEEP THIS IN STEP WITH --measure. A query cannot read a custom property,
+   so the number is written out. Set it too high and main can never reach it,
+   which means notes never leave the fold. The sum is measure + gap + width:
+   60 + 3 + 26 = 89, less one. */
+@container (max-width: 88ch) {
     .sidenote {
         display: none;
         float: none;
