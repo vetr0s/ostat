@@ -3,8 +3,10 @@
    font-relative, the measure in ch and the spacing in rem, so the root
    font-size scales the layout the way browser zoom does. Colors are the Modus
    palettes, switched by light-dark() against the user's color-scheme. Asides
-   are footnotes, so nothing floats beside the prose and there is no gutter.
-   Order below: tokens, base, code, type, layout, nav, footnotes, figures,
+   are margin notes: the prose keeps its measure and the note floats into a
+   gutter beside it. Below the breakpoint the gutter is gone and the marker
+   folds the note inline instead.
+   Order below: tokens, base, code, type, layout, nav, margin notes, figures,
    lists, tables. */
 
 /* Modus Operandi light, Modus Vivendi dark. */
@@ -32,8 +34,13 @@
     --space-md: 1.1rem;
     --space-lg: 1.5rem;
 
-    /* One column. Asides are footnotes, so nothing sits beside the prose. */
+    /* The prose column. Nothing but a margin note may sit outside it. */
     --measure: 80ch;
+
+    /* The gutter a margin note floats into, and the space before it. Both in
+       ch, so the whole layout still scales off the one root font-size. */
+    --sidenote-width: 26ch;
+    --sidenote-gap: 3ch;
 
     /* The left inset. Header and footer span the window. Only what is
        inside them is held to this. */
@@ -69,6 +76,9 @@ body {
     /* Loose leading spreads the same ink over more page. A paragraph then
        reads as a grey field rather than a block of white. */
     line-height: 1.4;
+
+    /* Margin notes are numbered here, not by the generator. */
+    counter-reset: sidenote-counter;
 }
 
 /* Code */
@@ -142,6 +152,9 @@ h1, h2, h3, h4, h5, h6 {
     line-height: 1.25;
     margin-block: var(--space-md) var(--space-xs);
     font-weight: 600;
+    /* main is wider than the prose now, to leave room for the gutter. A
+       heading has to be held to the measure explicitly or it runs into it. */
+    max-width: var(--measure);
 }
 
 h1 {
@@ -196,8 +209,12 @@ header {
 /* The bar spans the header. Its toggle lands at the window's right edge. */
 .crumbs { max-width: none; }
 
+/* Wide enough for the prose plus the gutter beside it. Everything except a
+   margin note is still held to the measure, so the text does not move. */
 main {
-    max-width: calc(var(--measure) + var(--pad) * 2);
+    max-width: calc(
+        var(--measure) + var(--sidenote-gap) + var(--sidenote-width) + var(--pad) * 2
+    );
     padding: var(--space-md) var(--pad);
 }
 
@@ -251,54 +268,80 @@ footer p { max-width: var(--measure); margin: 0; }
 
 #theme-toggle:hover { color: var(--color-link-hover); }
 
-/* Footnotes */
+/* Margin notes
+   The generator writes a label, a hidden checkbox, and the note. It writes no
+   numbers: both the marker and the note are numbered by the counter below, so
+   they cannot drift apart. */
 
-/* The marker takes no leading of its own. A paragraph with notes sets to the
-   same rhythm as one without. */
-.fn-ref {
+.sidenote-number {
+    counter-increment: sidenote-counter;
+}
+
+/* The marker takes no leading of its own, so a paragraph with notes sets to
+   the same rhythm as one without. */
+.sidenote-number::after {
+    content: counter(sidenote-counter);
     font-size: 0.7em;
     font-weight: 600;
     line-height: 0;
     vertical-align: super;
-    margin-inline-start: 0.1em;
-}
-
-/* A marker points to the bottom of this page, not away from it. Link blue
-   would make it compete with the prose. */
-.fn-ref a        { color: var(--color-muted); text-decoration: none; }
-.fn-ref a:hover  { color: var(--color-link-hover); }
-
-/* Apparatus, not prose. --measure is in ch, so the block stays at body size
-   and only the list shrinks, or the rule would stop short of a prose line. */
-.footnotes {
-    max-width: var(--measure);
-    margin-block-start: var(--space-lg);
-    padding-block-start: var(--space-sm);
-    border-block-start: 1px solid var(--color-border);
     color: var(--color-muted);
-    line-height: 1.45;
+    cursor: pointer;
 }
 
-.footnotes ol {
-    list-style: decimal;
-    padding-inline-start: 1.7em;
-    margin: 0;
-    max-width: none;
+.sidenote-number:hover::after { color: var(--color-link-hover); }
+
+/* Floated out of the measure into the gutter. The negative margin is what
+   moves it past the right edge of the prose. */
+.sidenote {
+    float: right;
+    clear: right;
+    width: var(--sidenote-width);
+    margin-right: calc(-1 * (var(--sidenote-width) + var(--sidenote-gap)));
+    margin-block: 0.25rem var(--space-sm);
     font-size: 0.78em;
+    line-height: 1.45;
+    color: var(--color-muted);
+    text-align: left;
 }
 
-.footnotes li             { margin-block-end: 0.4em; }
-.footnotes li:last-child  { margin-block-end: 0; }
-.footnotes p              { max-width: none; }
+.sidenote::before {
+    content: counter(sidenote-counter) " ";
+    font-weight: 600;
+    vertical-align: super;
+    font-size: 0.7em;
+    line-height: 0;
+}
 
-/* A note is often mostly link. At full blue the list becomes a wall of it. */
-.footnotes a        { color: inherit; text-decoration: underline; }
-.footnotes a:hover  { color: var(--color-link-hover); }
+/* A note is often mostly link. At full blue it becomes a wall of it. */
+.sidenote a        { color: inherit; text-decoration: underline; }
+.sidenote a:hover  { color: var(--color-link-hover); }
 
-/* The note you landed on comes up to full text color. */
-.footnotes li:target { color: var(--color-text); }
+/* The checkbox exists only to hold open/closed state below the breakpoint. */
+input.margin-toggle { display: none; }
 
-.footnotes .fn-back { margin-inline-start: 0.3em; text-decoration: none; }
+/* No gutter to float into. The marker becomes the toggle and the note folds
+   into the prose under it.
+
+   The threshold has to clear the whole layout, not just the prose: an 80ch
+   measure plus a 26ch gutter and its gap comes to about 1300px once padding
+   is counted. Below that the note would float past the right edge. Narrowing
+   --measure is what would bring notes down to laptop widths. */
+@media (max-width: 82em) {
+    .sidenote {
+        display: none;
+        float: none;
+        width: auto;
+        margin-right: 0;
+        max-width: var(--measure);
+    }
+
+    input.margin-toggle:checked + .sidenote {
+        display: block;
+        padding-inline-start: 1em;
+        border-inline-start: 2px solid var(--color-border);
+    }
+}
 
 /* Well short of the measure. A picture at full column stops illustrating the
    prose and becomes the page. */
