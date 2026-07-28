@@ -57,9 +57,11 @@
 /* Base */
 
 /* Sized from the root. The measure is in ch and the spacing in rem, so this
-   one number scales the layout the way browser zoom does. */
+   one number scales the layout the way browser zoom does. Left at the
+   browser's own size: a reader who wants it larger has a zoom control, and
+   scaling past their setting overrides a choice they already made. */
 html {
-    font-size: 120%;
+    font-size: 100%;
     -webkit-text-size-adjust: 100%;
 }
 
@@ -324,10 +326,9 @@ input.margin-toggle { display: none; }
    into the prose under it.
 
    The threshold has to clear the whole layout, not just the prose: an 80ch
-   measure plus a 26ch gutter and its gap comes to about 1300px once padding
-   is counted. Below that the note would float past the right edge. Narrowing
-   --measure is what would bring notes down to laptop widths. */
-@media (max-width: 82em) {
+   measure plus a 26ch gutter and its gap comes to about 990px once padding
+   is counted. Below that the note would float past the right edge. */
+@media (max-width: 64em) {
     .sidenote {
         display: none;
         float: none;
@@ -445,26 +446,19 @@ th {
     font-weight: 600;
 }
 
-/* Post listing. Leader dots, like a table of contents. */
+/* Post listing. The title, then its date on the line under it. Leader dots
+   used to run between them, which is decoration standing in for a
+   relationship the two lines already have. */
 
 .post-entry {
-    display: flex;
-    align-items: baseline;
-    gap: 0.5em;
     max-width: var(--measure);
-    margin-block-end: 0.4em;
+    margin-block-end: var(--space-sm);
 }
 
-.post-entry > a    { order: 1; }
-.post-entry > time { order: 3; white-space: nowrap; color: var(--color-muted); }
+.post-entry > time {
+    display: block;
+    color: var(--color-muted);
+    font-size: 0.85em;
+}
 
 .empty { color: var(--color-muted); }
-
-.post-entry::after {
-    content: "";
-    order: 2;
-    flex: 1;
-    border-bottom: 2px dotted var(--color-muted);
-    position: relative;
-    top: -0.25em;
-}

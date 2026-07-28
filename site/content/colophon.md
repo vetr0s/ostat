@@ -28,11 +28,15 @@ font swaps itself out a moment later.
 Headings are set semibold on a 1.2 modular scale. That is one step down from the
 sizes a browser picks on its own.
 
-The body runs about `20px` at every width. There is no step up on large screens.
-The page should read like a document, not a poster.
+The root is left at whatever size your browser is set to. Nothing here scales
+past that. If you want the text larger you have a zoom control, and overriding
+the size you already chose is not the site's business.
 
-That size is set once, at the root. Every length here is font-relative. One
-number scales the whole layout the way your browser's zoom does.
+There is no step up on large screens either. The page should read like a
+document, not a poster.
+
+Every length here is font-relative: the measure in `ch`, the spacing in `rem`.
+One number scales the whole layout the way your browser's zoom does.
 
 Body text is set a half step above regular. White on black reads thinner than
 black on white at the same weight. The leading is kept tight for the same
