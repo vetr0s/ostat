@@ -34,6 +34,8 @@ Page :: struct {
 	day:         int,
 	draft:       bool,
 	is_section:  bool,
+	is_home:     bool,
+	feed_url:    string, // "" when the page advertises no feed
 
 	body:        string, // markdown, front matter stripped
 	content:     string, // rendered html
@@ -57,6 +59,23 @@ collect_content :: proc(w: ^Website) -> bool {
 	slice.sort_by(w.articles[:], proc(a, b: ^Page) -> bool {
 		return a.date > b.date
 	})
+
+	// The home page has no content file. It is the config plus the recent
+	// posts, so it is synthesised here and rendered like any other page.
+	home := new(Page, w.perm)
+	home.title = w.config.title
+	home.description = w.config.description
+	home.is_home = true
+	home.url = "/"
+	home.out_path = "index.html"
+	home.feed_url = "/index.xml"
+	home.notes = make([dynamic]Note, w.perm)
+	append(&w.pages, home)
+
+	// Both feeds carry the same posts, so either address works in a reader.
+	if blog, found := w.sections[BLOG_SECTION]; found {
+		blog.feed_url = "/" + BLOG_SECTION + "/index.xml"
+	}
 	return true
 }
 
@@ -144,7 +163,7 @@ load_page :: proc(w: ^Website, path, name, section: string) -> bool {
 			return false
 		}
 		w.sections[strings.clone(section, w.perm)] = p
-	} else if section == "blog" {
+	} else if section == BLOG_SECTION {
 		append(&w.articles, p)
 	}
 	return true

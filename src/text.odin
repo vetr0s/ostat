@@ -1,0 +1,178 @@
+package main
+
+import "core:fmt"
+import "core:strings"
+
+// Escaping, truncation, and the date and title shapes the layouts need.
+
+MONTHS :: [13]string {
+	"",
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+}
+
+html_escape :: proc(s: string, allocator := context.allocator) -> string {
+	if !strings.contains_any(s, `&<>"'`) {
+		return s
+	}
+
+	b := strings.builder_make(allocator)
+	for c in s {
+		switch c {
+		case '&':
+			strings.write_string(&b, "&amp;")
+		case '<':
+			strings.write_string(&b, "&lt;")
+		case '>':
+			strings.write_string(&b, "&gt;")
+		case '"':
+			strings.write_string(&b, "&quot;")
+		case '\'':
+			strings.write_string(&b, "&#39;")
+		case:
+			strings.write_rune(&b, c)
+		}
+	}
+	return strings.to_string(b)
+}
+
+// Drops every tag and decodes the handful of entities cmark emits, so that
+// rendered HTML can stand in as a plain-text summary.
+strip_tags :: proc(html: string, allocator := context.allocator) -> string {
+	b := strings.builder_make(allocator)
+
+	in_tag := false
+	for i := 0; i < len(html); i += 1 {
+		switch {
+		case html[i] == '<':
+			in_tag = true
+		case html[i] == '>':
+			in_tag = false
+		case in_tag:
+		// skipped
+		case html[i] == '&':
+			end := strings.index_byte(html[i:], ';')
+			if end < 0 {
+				strings.write_byte(&b, html[i])
+				continue
+			}
+			strings.write_string(&b, decode_entity(html[i:i + end + 1]))
+			i += end
+		case:
+			strings.write_byte(&b, html[i])
+		}
+	}
+	return strings.to_string(b)
+}
+
+@(private = "file")
+decode_entity :: proc(e: string) -> string {
+	switch e {
+	case "&amp;":
+		return "&"
+	case "&lt;":
+		return "<"
+	case "&gt;":
+		return ">"
+	case "&quot;":
+		return `"`
+	case "&#39;", "&apos;":
+		return "'"
+	}
+	return e
+}
+
+// Cuts at the last word boundary inside the limit and marks the cut, which is
+// what Hugo's truncate did.
+truncate_words :: proc(s: string, limit: int, allocator := context.allocator) -> string {
+	if len(s) <= limit {
+		return s
+	}
+
+	cut := limit
+	for cut > 0 && s[cut] != ' ' {
+		cut -= 1
+	}
+	if cut == 0 {
+		cut = limit
+	}
+	return fmt.aprintf("%s…", strings.trim_right_space(s[:cut]), allocator = allocator)
+}
+
+page_title :: proc(w: ^Website, p: ^Page, allocator := context.allocator) -> string {
+	if p.is_home {
+		return w.config.title
+	}
+	return fmt.aprintf("%s · %s", p.title, w.config.title, allocator = allocator)
+}
+
+// Page description, then the opening prose, then the site's own. Whatever it
+// lands on gets stripped of markup and cut to the meta description limit.
+page_description :: proc(w: ^Website, p: ^Page, allocator := context.allocator) -> string {
+	if p.description != "" {
+		return truncate_words(p.description, DESCRIPTION_LIMIT, allocator)
+	}
+	if summary := first_paragraph(p.content, allocator); summary != "" {
+		return truncate_words(summary, DESCRIPTION_LIMIT, allocator)
+	}
+	return truncate_words(w.config.description, DESCRIPTION_LIMIT, allocator)
+}
+
+// cmark has no equivalent of Hugo's .Summary, so the opening paragraph stands
+// in for it.
+first_paragraph :: proc(html: string, allocator := context.allocator) -> string {
+	open := strings.index(html, "<p>")
+	if open < 0 {
+		return ""
+	}
+	rest := html[open + len("<p>"):]
+
+	close := strings.index(rest, "</p>")
+	if close < 0 {
+		return ""
+	}
+
+	// Soft line breaks inside the paragraph are newlines in the HTML, and a
+	// meta description is one line.
+	text := strip_tags(rest[:close], allocator)
+	flat, _ := strings.replace_all(text, "\n", " ", allocator)
+	return strings.trim_space(flat)
+}
+
+// "2026-07-12" -> "July 12, 2026"
+long_date :: proc(p: ^Page, allocator := context.allocator) -> string {
+	months := MONTHS
+	if p.month < 1 || p.month > 12 {
+		return p.date
+	}
+	return fmt.aprintf("%s %d, %d", months[p.month], p.day, p.year, allocator = allocator)
+}
+
+// "vetr0s.dev" -> `vetr0s<span class="accent">.dev</span>`
+site_brand :: proc(w: ^Website, allocator := context.allocator) -> string {
+	title := html_escape(w.config.title, allocator)
+	dot := strings.index_byte(title, '.')
+	if dot < 0 {
+		return title
+	}
+	return fmt.aprintf(`%s<span class="accent">%s</span>`, title[:dot], title[dot:], allocator = allocator)
+}
+
+// "en-us" -> "en", for the html lang attribute.
+html_lang :: proc(w: ^Website) -> string {
+	locale := w.config.locale
+	if dash := strings.index_byte(locale, '-'); dash > 0 {
+		return locale[:dash]
+	}
+	return locale
+}
