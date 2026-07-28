@@ -1,0 +1,7 @@
+build/
+public/
+bin/
+*.o
+*.obj
+*.dSYM/
+.DS_Store

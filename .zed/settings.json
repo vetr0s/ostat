@@ -1,0 +1,32 @@
+{
+    "lsp": {
+        "ols": {
+            "initialization_options": {
+                "enable_hover": true,
+                "enable_snippets": true,
+                "enable_procedure_snippet": true,
+                "enable_completion_matching": true,
+                "enable_references": true,
+                "enable_document_symbols": true,
+                "enable_document_links": true,
+                "enable_format": true,
+                "enable_semantic_tokens": true,
+                "enable_inlay_hints": false
+            }
+        }
+    },
+    "languages": {
+        "Odin": {
+            "tab_size": 4,
+            "hard_tabs": true,
+            "format_on_save": "on",
+            "remove_trailing_whitespace_on_save": true
+        }
+    },
+    "file_types": {
+        "JSONC": ["ols.json", "odinfmt.json"]
+    },
+    "terminal": {
+        "working_directory": "current_project_directory"
+    }
+}

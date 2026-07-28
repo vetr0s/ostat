@@ -1,0 +1,42 @@
+[
+    {
+        "label": "ostat: build & run",
+        "command": "./build.sh debug && ./build/debug/ostat build site -drafts",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "use_new_terminal": false,
+        "allow_concurrent_runs": false
+    },
+    {
+        "label": "ostat: build (debug)",
+        "command": "./build.sh debug",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "use_new_terminal": false,
+        "allow_concurrent_runs": false
+    },
+    {
+        "label": "ostat: build (release)",
+        "command": "./build.sh release",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "use_new_terminal": false,
+        "allow_concurrent_runs": false
+    },
+    {
+        "label": "ostat: check",
+        "command": "odin check src 2>&1 | sed -E 's/^(.+)\\(([0-9]+):([0-9]+)\\)/\\1:\\2:\\3/'",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "use_new_terminal": false,
+        "allow_concurrent_runs": false
+    },
+    {
+        "label": "ostat: test",
+        "command": "./build.sh test",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "use_new_terminal": false,
+        "allow_concurrent_runs": false
+    }
+]
