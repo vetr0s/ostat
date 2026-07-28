@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # vendor:commonmark links "system:cmark", so the library has to be here
+      # before anything compiles.
+      - name: Install cmark
+        run: sudo apt-get update && sudo apt-get install -y libcmark-dev
+
+      - uses: laytan/setup-odin@v2
+        with:
+          release: false
+          branch: master
+
+      - name: Check
+        run: odin check src
+
+      - name: Test
+        run: ./build.sh test
+
+      - name: Build the example site
+        run: |
+          ./build.sh release
+          ./build/release/ostat build site -o public
+
+      # A page that stopped being written is the failure this catches.
+      - name: Verify output
+        run: |
+          set -eux
+          test -s public/index.html
+          test -s public/index.xml
+          test -s public/blog/index.xml
+          test -s public/blog/kitchen-sink/index.html
+          test -s public/sitemap.xml
+          test -s public/css/style.css
+          for f in index.xml blog/index.xml sitemap.xml; do
+            python3 -c "import xml.dom.minidom,sys; xml.dom.minidom.parse('public/$f')"
+          done

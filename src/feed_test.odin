@@ -93,3 +93,21 @@ test_page_without_notes_gets_no_endnote_list :: proc(t: ^testing.T) {
 	out, _ := endnote_html("Nothing to annotate.\n")
 	testing.expect(t, !strings.contains(out, "footnotes"), "no empty list")
 }
+
+@(test)
+test_feed_urls_are_absolute :: proc(t: ^testing.T) {
+	w := test_website()
+	in_ := `<a href="/colophon/">c</a> <img src="/img/a.png"> <a href="https://x.dev/">x</a>`
+	out := absolutize_urls(w, in_, w.scratch)
+
+	testing.expect(t, strings.contains(out, `href="https://vetr0s.dev/colophon/"`), "href absolute")
+	testing.expect(t, strings.contains(out, `src="https://vetr0s.dev/img/a.png"`), "src absolute")
+	testing.expect(t, strings.contains(out, `href="https://x.dev/"`), "external link untouched")
+}
+
+@(test)
+test_protocol_relative_urls_are_left_alone :: proc(t: ^testing.T) {
+	w := test_website()
+	out := absolutize_urls(w, `<img src="//cdn.example/a.png">`, w.scratch)
+	testing.expect_value(t, out, `<img src="//cdn.example/a.png">`)
+}

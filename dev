@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Build the example site and serve it.
+#
+#   ./dev            build with drafts, serve on :1313
+#   ./dev --build    production build only, no server
+#   ./dev --clean    throw away public/ first, then serve
+#
+# There is no file watcher. Rebuild with ctrl-c and rerun, or run
+# `./dev --build` from the editor while the server keeps running.
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+SITE="site"
+OUT="public"
+PORT="${PORT:-1313}"
+
+# site/static/resume.pdf is not committed: vetr0s/resume owns it and the live
+# site's CI pulls it in. Grab a copy so the /resume.pdf link is not a 404.
+# Only a warning if it fails, since the generator works offline.
+if [ ! -f "$SITE/static/resume.pdf" ]; then
+  curl --fail --silent --show-error --location --retry 2 \
+    -o "$SITE/static/resume.pdf" \
+    https://raw.githubusercontent.com/vetr0s/resume/main/resume.pdf \
+    || echo "could not fetch resume.pdf; the /resume.pdf link will 404 locally" >&2
+fi
+
+./build.sh debug
+
+case "${1:-}" in
+  --build)
+    rm -rf "$OUT"
+    ./build/debug/ostat build "$SITE" -o "$OUT"
+    echo
+    echo "Built to $OUT/. This is what a deploy would publish."
+    ;;
+  *)
+    if [ "${1:-}" = "--clean" ]; then
+      rm -rf "$OUT"
+    fi
+
+    ./build/debug/ostat build "$SITE" -o "$OUT" -drafts -future
+    echo
+    echo "serving $OUT/ on http://localhost:$PORT"
+    exec python3 -m http.server "$PORT" --directory "$OUT"
+    ;;
+esac

@@ -61,7 +61,59 @@ feed_item_content :: proc(w: ^Website, p: ^Page) -> (content: string, ok: bool) 
 	b := strings.builder_make(w.scratch)
 	strings.write_string(&b, md_block(src, w.scratch))
 	write_endnote_list(w, &b, p)
-	return strings.to_string(b), true
+	return absolutize_urls(w, strings.to_string(b), w.scratch), true
+}
+
+// A feed item is read on someone else's host, where a root-relative link
+// resolves against their document rather than this site. Every href and src
+// that starts at the root is rewritten to an absolute URL.
+absolutize_urls :: proc(w: ^Website, html: string, allocator := context.allocator) -> string {
+	base := strings.trim_suffix(w.config.base_url, "/")
+
+	b := strings.builder_make(allocator)
+	rest := html
+
+	for {
+		i := next_root_relative(rest)
+		if i < 0 {
+			break
+		}
+		strings.write_string(&b, rest[:i])
+		strings.write_string(&b, base)
+		rest = rest[i:]
+	}
+
+	strings.write_string(&b, rest)
+	return strings.to_string(b)
+}
+
+// The offset of the `/` opening a root-relative href or src value, or -1.
+@(private = "file")
+next_root_relative :: proc(html: string) -> int {
+	offset := 0
+	for {
+		rest := html[offset:]
+
+		href := strings.index(rest, `href="/`)
+		src := strings.index(rest, `src="/`)
+
+		i, width: int
+		switch {
+		case href < 0 && src < 0:
+			return -1
+		case src < 0 || (href >= 0 && href < src):
+			i, width = href, len(`href="`)
+		case:
+			i, width = src, len(`src="`)
+		}
+
+		slash := offset + i + width
+		// A protocol-relative URL is already absolute enough.
+		if slash + 1 >= len(html) || html[slash + 1] != '/' {
+			return slash
+		}
+		offset = slash + 1
+	}
 }
 
 @(private = "file")

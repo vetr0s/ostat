@@ -23,6 +23,7 @@ render_all :: proc(w: ^Website) -> bool {
 		render_page(w, p) or_return
 	}
 	render_feeds(w) or_return
+	render_sitemap(w) or_return
 	copy_static(w) or_return
 	return true
 }
