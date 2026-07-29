@@ -188,3 +188,31 @@ test_a_closing_fence_takes_no_info_string :: proc(t: ^testing.T) {
 	testing.expect(t, strings.contains(out, "still inside"), "the middle line did not close it")
 	testing.expect(t, strings.contains(out, "```text"), "it is content, not markup")
 }
+
+@(test)
+test_a_fence_inside_a_list_stays_in_the_list :: proc(t: ^testing.T) {
+	// It used to end the list and hoist the block to the top level.
+	w := test_website()
+	p := test_page(w, "- item\n\n  ```odin\n  x := 1\n  y := 2\n  ```\n\n- second\n")
+	src, ok := preprocess(w, p)
+	testing.expect_value(t, ok, true)
+
+	html := md_block(src, w.scratch)
+	testing.expect(t, strings.count(html, "<ul>") == 1, "one list, not two")
+	testing.expect(t, strings.contains(html, "</code></pre>\n</li>"), "the block is inside the item")
+	// The list's indentation belongs to the item, not to the code.
+	testing.expect(t, !strings.contains(html, ">  x := "), "code is dedented")
+	testing.expect(t, strings.contains(html, "&#10;"), "newlines ride as entities")
+}
+
+@(test)
+test_a_top_level_fence_is_written_plainly :: proc(t: ^testing.T) {
+	// No entity newlines when there is no list item to stay inside.
+	w := test_website()
+	p := test_page(w, "```text\na\nb\n```\n")
+	src, _ := preprocess(w, p)
+
+	html := md_block(src, w.scratch)
+	testing.expect(t, strings.contains(html, "a\nb"), "real newlines")
+	testing.expect(t, !strings.contains(html, "&#10;"))
+}

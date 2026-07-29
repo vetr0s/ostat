@@ -105,6 +105,7 @@ assemble_blocks :: proc(w: ^Website, lines: []Line, allocator := context.allocat
 // Returns how many lines the block consumed, counting both fence markers.
 @(private = "file")
 write_fenced_code :: proc(w: ^Website, b: ^strings.Builder, lines: []Line, start: int) -> int {
+	fence, _ := scan_fence(lines[start].text)
 	lang := fence_language(lines[start].text)
 
 	end := start + 1
@@ -112,18 +113,62 @@ write_fenced_code :: proc(w: ^Website, b: ^strings.Builder, lines: []Line, start
 		end += 1
 	}
 
+	// The fence's own indent belongs to the list item holding it, not to the
+	// code, so it comes back off before the code is rendered.
 	body := strings.builder_make(w.scratch)
 	for line in lines[start + 1:end] {
-		strings.write_string(&body, line.text)
+		strings.write_string(&body, dedent(line.text, fence.indent))
 		strings.write_byte(&body, '\n')
 	}
 
+	block := strings.builder_make(w.scratch)
+	write_code_block(w, &block, lang, strings.to_string(body))
+
 	open_html_block(b)
-	write_code_block(w, b, lang, strings.to_string(body))
+	if fence.indent > 0 {
+		write_nested_block(b, strings.to_string(block), fence.indent, w.scratch)
+	} else {
+		strings.write_string(b, strings.to_string(block))
+	}
 	strings.write_string(b, "\n\n")
 
 	// The closing marker is consumed too, unless the fence was never closed.
 	return min(end + 1, len(lines)) - start
+}
+
+/*
+Writes a block that has to live inside a list item.
+
+Every line of an HTML block must stay at the item's content column or the item
+ends and the block is hoisted out to the top level, which is what used to
+happen to any fence inside a list. Indenting the code to match would satisfy
+the parser but show up as leading whitespace inside the <pre>.
+
+One physical line satisfies both: there are no continuation lines to break the
+item, and the newlines ride along as entities, which a browser renders inside
+a <pre> without their contributing any indentation.
+*/
+@(private = "file")
+write_nested_block :: proc(
+	b: ^strings.Builder,
+	block: string,
+	indent: int,
+	allocator := context.allocator,
+) {
+	for _ in 0 ..< indent {
+		strings.write_byte(b, ' ')
+	}
+	one_line, _ := strings.replace_all(block, "\n", "&#10;", allocator)
+	strings.write_string(b, one_line)
+}
+
+@(private = "file")
+dedent :: proc(text: string, n: int) -> string {
+	i := 0
+	for i < n && i < len(text) && text[i] == ' ' {
+		i += 1
+	}
+	return text[i:]
 }
 
 // The info string after the fence: ```odin -> "odin".
