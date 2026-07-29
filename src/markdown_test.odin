@@ -216,3 +216,19 @@ test_a_top_level_fence_is_written_plainly :: proc(t: ^testing.T) {
 	testing.expect(t, strings.contains(html, "a\nb"), "real newlines")
 	testing.expect(t, !strings.contains(html, "&#10;"))
 }
+
+@(test)
+test_a_repeated_reference_does_not_repeat_the_id :: proc(t: ^testing.T) {
+	out, _, ok := run("A claim[^dup] and again[^dup].\n\n[^dup]: Shared.\n")
+	testing.expect_value(t, ok, true)
+	testing.expect_value(t, strings.count(out, `id="sn-dup"`), 1)
+	testing.expect_value(t, strings.count(out, `for="sn-dup"`), 2)
+	testing.expect_value(t, strings.count(out, `class="sidenote"`), 1)
+}
+
+@(test)
+test_a_label_that_cannot_be_an_id_is_rejected :: proc(t: ^testing.T) {
+	// Unescaped, this broke out of the attribute and produced live markup.
+	_, _, ok := run("A claim[^a\"onx=1].\n\n[^a\"onx=1]: Injected.\n")
+	testing.expect_value(t, ok, false)
+}

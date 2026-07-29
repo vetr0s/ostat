@@ -84,3 +84,22 @@ test_title_from_slug :: proc(t: ^testing.T) {
 	testing.expect_value(t, title_from_slug("a-new-post"), "A New Post")
 	testing.expect_value(t, title_from_slug("ostat"), "Ostat")
 }
+
+@(test)
+test_slug_rejects_traversal_and_separators :: proc(t: ^testing.T) {
+	// A slug becomes a directory name. "../../x" used to create a directory
+	// outside the output tree before the write failed.
+	for bad in ([]string{"../../escaped", "..", "a/b", "a\\b", "a b", "", ".", "a\tb"}) {
+		testing.expectf(t, !valid_slug(bad), "%q should be rejected", bad)
+	}
+	for good in ([]string{"a-post", "v1.2", "under_score", "ünïcode", "2026-07-29"}) {
+		testing.expectf(t, valid_slug(good), "%q should be allowed", good)
+	}
+}
+
+@(test)
+test_front_matter_rejects_a_bad_slug :: proc(t: ^testing.T) {
+	src := "---\n{\"title\": \"x\", \"slug\": \"../../evil\"}\n---\n"
+	_, _, err := parse_front_matter(src, context.temp_allocator)
+	testing.expect_value(t, err, Front_Matter_Error.Bad_Slug)
+}

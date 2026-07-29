@@ -34,6 +34,7 @@ Front_Matter_Error :: enum {
 	Bad_Json,
 	Missing_Title,
 	Bad_Date,
+	Bad_Slug,
 }
 
 // Splits a source file into its raw front matter block and the markdown after
@@ -77,9 +78,33 @@ parse_front_matter :: proc(
 			return {}, "", .Bad_Date
 		}
 	}
+	if a.slug != "" && !valid_slug(a.slug) {
+		return {}, "", .Bad_Slug
+	}
 
 	body = strings.trim_left_space(body)
 	return
+}
+
+/*
+A slug becomes a directory name and a URL path segment, so it is checked here
+rather than concatenated into a path and trusted.
+
+A content file is the least trusted input the generator has, and "../../x" was
+enough to make it create a directory outside the output tree before failing
+the write. Path separators, traversal, whitespace and control characters are
+all out; anything else, including non-ASCII, is a legitimate slug.
+*/
+valid_slug :: proc(s: string) -> bool {
+	if s == "" || s == "." || strings.contains(s, "..") {
+		return false
+	}
+	for c in s {
+		if c == '/' || c == '\\' || c <= ' ' || c == 0x7f {
+			return false
+		}
+	}
+	return true
 }
 
 // "2026-07-12" -> 2026, 7, 12. Strict: exactly that shape, and a real date.

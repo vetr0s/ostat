@@ -94,6 +94,10 @@ is_indented :: proc(text: string) -> bool {
 	return len(text) > 0 && (text[0] == ' ' || text[0] == '\t') && strings.trim_space(text) != ""
 }
 
+// A label becomes an HTML id and the `for` of a label element, so it is held
+// to what an id can be. It is escaped on the way out as well: validation
+// catches the mistake early, escaping means a miss cannot produce broken
+// markup.
 @(private = "file")
 validate_note_label :: proc(p: ^Page, label: string) -> bool {
 	if label == "" {
@@ -101,8 +105,17 @@ validate_note_label :: proc(p: ^Page, label: string) -> bool {
 		return false
 	}
 	for c in label {
-		if c == ' ' || c == '\t' {
+		switch c {
+		case ' ', '\t':
 			fmt.eprintfln("ostat: %s: note label %q contains whitespace", p.source, label)
+			return false
+		case '"', '\'', '<', '>', '&':
+			fmt.eprintfln(
+				"ostat: %s: note label %q contains %q, which cannot go in an id",
+				p.source,
+				label,
+				c,
+			)
 			return false
 		}
 	}
@@ -166,11 +179,14 @@ replace_note_markers :: proc(w: ^Website, p: ^Page, text: string, style: Note_St
 		}
 
 		strings.write_string(&b, rest[:start])
+		// Only the first reference carries the note itself and the ids. A
+		// later one is a second pointer at the same note, not a copy of it.
+		first := note.used == 1
 		switch style {
 		case .Margin:
-			write_margin_note(&b, note^)
+			write_margin_note(w, &b, note^, first)
 		case .Endnote:
-			write_endnote_marker(w, &b, p, note^)
+			write_endnote_marker(w, &b, p, note^, first)
 		}
 		rest = after[close + 1:]
 	}
@@ -189,23 +205,28 @@ next_note_number :: proc(p: ^Page) -> int {
 }
 
 @(private = "file")
-write_margin_note :: proc(b: ^strings.Builder, note: Note) {
+write_margin_note :: proc(w: ^Website, b: ^strings.Builder, note: Note, first: bool) {
 	// No space before the marker. gingerBill writes an &nbsp; there, which
 	// renders as a visible gap: "note 1," rather than "note1,". Sitting flush
 	// against the word is also what stops it wrapping to a line on its own,
 	// since there is no break opportunity without whitespace.
-	//
+	id := fmt.tprintf("%s%s", NOTE_ID_PREFIX, html_escape(note.label, w.scratch))
+
+	fmt.sbprintf(b, `<label for="%s" class="margin-toggle sidenote-number"></label>`, id)
+	if !first {
+		// A second reference points at the note the first one wrote. Emitting
+		// the input and the note again would repeat the id, and every label
+		// would then toggle whichever came first.
+		return
+	}
+
 	// <input> is a void element, so it is written self-closing rather than
 	// with the closing tag gingerBill's generator emits.
 	fmt.sbprintf(
 		b,
-		`<label for="%s%s" class="margin-toggle sidenote-number"></label>` +
-		`<input type="checkbox" id="%s%s" class="margin-toggle">` +
+		`<input type="checkbox" id="%s" class="margin-toggle">` +
 		`<span class="sidenote">%s</span>`,
-		NOTE_ID_PREFIX,
-		note.label,
-		NOTE_ID_PREFIX,
-		note.label,
+		id,
 		note.html,
 	)
 }
@@ -213,11 +234,20 @@ write_margin_note :: proc(b: ^strings.Builder, note: Note) {
 // Anchors are absolute: a feed item is read a long way from the page it came
 // from, so a bare fragment would resolve against the reader's own document.
 @(private = "file")
-write_endnote_marker :: proc(w: ^Website, b: ^strings.Builder, p: ^Page, note: Note) {
+write_endnote_marker :: proc(
+	w: ^Website,
+	b: ^strings.Builder,
+	p: ^Page,
+	note: Note,
+	first: bool,
+) {
+	// Only the first reference is the backlink's target, so only it takes the
+	// id.
+	anchor := fmt.tprintf(` id="fnref-%d"`, note.number) if first else ""
 	fmt.sbprintf(
 		b,
-		`<sup class="fn-ref" id="fnref-%d"><a href="%s#fn-%d" role="doc-noteref">%d</a></sup>`,
-		note.number,
+		`<sup class="fn-ref"%s><a href="%s#fn-%d" role="doc-noteref">%d</a></sup>`,
+		anchor,
 		page_permalink(w, p, w.scratch),
 		note.number,
 		note.number,
