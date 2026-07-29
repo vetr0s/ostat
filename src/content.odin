@@ -136,7 +136,10 @@ load_page :: proc(w: ^Website, path, name, section: string) -> bool {
 	p.title       = fm.title
 	p.description = fm.description
 	p.draft       = fm.draft
-	p.section     = section
+	// Cloned, not aliased. A nested section name is a tprintf result and a
+	// derived slug points into the directory listing, both of which live in
+	// scratch — and a Page outlives scratch. Nothing here may point into it.
+	p.section     = strings.clone(section, w.perm)
 	p.source      = strings.clone(path, w.perm)
 	p.body        = strings.clone(body, w.perm)
 	p.is_section  = name == "_index.md"
@@ -155,7 +158,10 @@ load_page :: proc(w: ^Website, path, name, section: string) -> bool {
 		p.slug = ""
 		p.url = section == "" ? "/" : fmt.aprintf("/%s/", section, allocator = w.perm)
 	} else {
-		p.slug = fm.slug != "" ? fm.slug : name[:len(name) - len(".md")]
+		p.slug = strings.clone(
+			fm.slug != "" ? fm.slug : name[:len(name) - len(".md")],
+			w.perm,
+		)
 		if section == "" {
 			p.url = fmt.aprintf("/%s/", p.slug, allocator = w.perm)
 		} else {
