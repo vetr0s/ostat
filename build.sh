@@ -62,10 +62,12 @@ done
 
 # The ${LINK[@]+...} guard is for bash 3.2, which is what macOS ships and
 # which treats an empty array as unset under `set -u`.
+# pipefail makes the pipeline carry odin's status, and set -e acts on it, so
+# there is nothing left to propagate by hand here.
 if [ "$MODE" = "test" ]; then
     odin test "$SRC" "${FLAGS[@]}" ${LINK[@]+"${LINK[@]}"} 2>&1 \
         | sed -E 's/^(.+)\(([0-9]+):([0-9]+)\)/\1:\2:\3/'
-    exit "${PIPESTATUS[0]}"
+    exit 0
 fi
 
 mkdir -p "$OUT_DIR"

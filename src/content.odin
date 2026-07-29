@@ -178,6 +178,12 @@ load_page :: proc(w: ^Website, path, name, section: string) -> bool {
 		}
 		w.sections[strings.clone(section, w.perm)] = p
 	} else if section == BLOG_SECTION {
+		// A post carries a date or the feed emits an empty <pubDate> and sorts
+		// it last. Silently half-publishing it is worse than saying so.
+		if p.date == "" {
+			fmt.eprintfln("ostat: %s: a post in %q needs a date", path, BLOG_SECTION)
+			return false
+		}
 		append(&w.articles, p)
 	}
 	return true

@@ -13,7 +13,7 @@ USAGE :: `ostat - a static site generator
 
 usage:
     ostat build [site-dir]      build a site into an output directory
-    ostat new <path>            create a page from the archetype
+    ostat new <path> [-s dir]   create a page from the archetype
     ostat version               print the version
 
 build options:
