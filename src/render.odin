@@ -115,7 +115,7 @@ write_header :: proc(w: ^Website, b: ^strings.Builder, p: ^Page) {
 @(private = "file")
 write_home :: proc(w: ^Website, b: ^strings.Builder) {
 	p := w.config.portrait
-	strings.write_string(b, "<section id=\"find-me\">\n  <h1>Find Me</h1>\n")
+	fmt.sbprintfln(b, `<section id="find-me">`+"\n"+`  <h1>%s</h1>`, html_escape(w.config.home.contact_heading, w.scratch))
 	fmt.sbprintfln(
 		b,
 		`  <div class="portrait">`+"\n"+`    <img src="%s" alt="%s" width="%d" height="%d" />`+"\n"+`  </div>`,
@@ -131,7 +131,7 @@ write_home :: proc(w: ^Website, b: ^strings.Builder) {
 	}
 	strings.write_string(b, "  </dl>\n</section>\n\n")
 
-	strings.write_string(b, "<section id=\"elsewhere\">\n  <h1>Elsewhere</h1>\n  <ul>\n")
+	fmt.sbprintfln(b, `<section id="elsewhere">`+"\n"+`  <h1>%s</h1>`+"\n"+`  <ul>`, html_escape(w.config.home.elsewhere_heading, w.scratch))
 	for link in w.config.elsewhere {
 		fmt.sbprintfln(b, `    <li><a href="%s">%s</a></li>`, link.url, link.label)
 	}
@@ -140,9 +140,9 @@ write_home :: proc(w: ^Website, b: ^strings.Builder) {
 	// Rendered even with nothing to list. The badge is the only way to the
 	// feed from this page, and an empty blog is when subscribing matters.
 	strings.write_string(b, "<section id=\"recent\">\n")
-	write_section_head(w, b, "Recent Posts", "/index.xml")
+	write_section_head(w, b, w.config.home.recent_heading, ROOT_FEED_PATH)
 	recent := w.articles[:min(HOME_RECENT_COUNT, len(w.articles))]
-	write_post_entries(w, b, recent, "Nothing published yet.")
+	write_post_entries(w, b, recent, w.config.home.nothing_published)
 	strings.write_string(b, "</section>\n")
 }
 

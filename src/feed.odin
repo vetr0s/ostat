@@ -48,7 +48,7 @@ render_feeds :: proc(w: ^Website) -> bool {
 		bodies[i] = feed_item_content(w, p) or_return
 	}
 
-	write_output(w, "index.xml", build_feed(w, "/index.xml", "/", items, bodies)) or_return
+	write_output(w, "index.xml", build_feed(w, ROOT_FEED_PATH, "/", items, bodies)) or_return
 	write_output(
 		w,
 		BLOG_SECTION + "/index.xml",

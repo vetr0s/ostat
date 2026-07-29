@@ -1,10 +1,6 @@
 build/
 public/
 bin/
-
-# Pulled from a private repo by ./dev. This one is a public repo; keeping the
-# file out of it is the point.
-site/static/resume.pdf
 *.o
 *.obj
 *.dSYM/

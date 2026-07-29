@@ -1,11 +1,25 @@
 package main
 
 /*
-Everything hugo.toml used to carry, in one struct.
+One site's identity, in one struct.
 
-This is the seam. Nothing outside this file hardcodes a site's title, URL, or
-navigation, so making ostat configurable later means writing a loader that
-fills a Site_Config instead of rewriting callers.
+What lives here: everything about *which* site is being built — its name,
+address, author, the home page's copy and links, the section that holds posts.
+Change these and you get a different site.
+
+What does not, and where to find it instead:
+
+  - The *shape* of the layouts, in render.odin. The home page has three
+    sections in a fixed order; a site wanting a fourth edits write_home. That
+    is the deliberate trade of "layouts are procedures, not templates".
+  - The assets each page links, in html/head.html. Favicons, the manifest, the
+    stylesheet and the font preload are markup, and they are #load-ed whole.
+  - The CSS class names the generator writes, in notes.odin and highlight.odin.
+    They are a contract with static/css/style.css and have to move together.
+
+This comment used to claim nothing outside this file hardcoded a site's title,
+URL or navigation. That was false in four files, and a forker who believed it
+edited this struct and still shipped someone else's home page.
 */
 
 // A definition list entry: the label names the kind of address, the text is
@@ -28,17 +42,36 @@ Portrait :: struct {
 	height: int,
 }
 
+// The title, split where the accent colour starts. Written out rather than
+// derived: the rule used to be "split at the first dot", which lives nowhere
+// near this file and renders "Dr. Foo" as "Dr" plus an accented ". Foo".
+Brand :: struct {
+	head:   string,
+	accent: string,
+}
+
+// The three headings on the home page. Copy, not structure — the sections
+// themselves are written in render.odin.
+Home_Copy :: struct {
+	contact_heading:   string,
+	elsewhere_heading: string,
+	recent_heading:    string,
+	nothing_published: string,
+}
+
 Site_Config :: struct {
 	base_url:    string,
 	title:       string,
 	description: string,
 	author:      string,
 	locale:      string,
+	brand:       Brand,
 
 	// The home page. Data, not markup.
 	portrait:    Portrait,
 	contact:     []Contact,
 	elsewhere:   []Link,
+	home:        Home_Copy,
 }
 
 // A variable, not a constant. A compile-time constant holding slice fields
@@ -50,18 +83,24 @@ DEFAULT_SITE := Site_Config {
 	description = "Nathan Tebbs, software engineer. Writing, projects, and a page about who I am.",
 	author      = "Nathan Tebbs",
 	locale      = "en-us",
+	brand       = {head = "vetr0s", accent = ".dev"},
 	portrait    = {src = "/img/gh_profile.jpg", alt = "Nathan Tebbs", width = 553, height = 553},
 	contact     = {
-		{"email",    "vetr0s.dev@gmail.com",       "mailto:vetr0s.dev@gmail.com"},
-		{"github",   "github.com/vetr0s",          "https://github.com/vetr0s"},
-		{"linkedin", "linkedin.com/in/ntebbs",     "https://www.linkedin.com/in/ntebbs"},
-		{"resume",   "resume.pdf",                 "/resume.pdf"},
+		{"email",    "vetr0s.dev@gmail.com",   "mailto:vetr0s.dev@gmail.com"},
+		{"github",   "github.com/vetr0s",      "https://github.com/vetr0s"},
+		{"linkedin", "linkedin.com/in/ntebbs", "https://www.linkedin.com/in/ntebbs"},
 	},
 	elsewhere   = {
 		{"about",    "/about/"},
 		{"blog",     "/blog/"},
 		{"projects", "/projects/"},
 		{"colophon", "/colophon/"},
+	},
+	home        = {
+		contact_heading   = "Find Me",
+		elsewhere_heading = "Elsewhere",
+		recent_heading    = "Recent Posts",
+		nothing_published = "Nothing published yet.",
 	},
 }
 
@@ -71,3 +110,7 @@ HOME_RECENT_COUNT :: 5
 // The section whose pages are posts: the only one that gets a feed, a date, or
 // a place in the recent list.
 BLOG_SECTION :: "blog"
+
+// The root feed. Named once because content.odin advertises it, render.odin
+// links it and feed.odin writes it, and they have to agree.
+ROOT_FEED_PATH :: "/index.xml"

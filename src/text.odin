@@ -165,14 +165,20 @@ long_date :: proc(p: ^Page, allocator := context.allocator) -> string {
 	return fmt.aprintf("%s %d, %d", MONTHS[p.month], p.day, p.year, allocator = allocator)
 }
 
-// "vetr0s.dev" -> `vetr0s<span class="accent">.dev</span>`
+// The brand, with its accented tail wrapped. Both halves come from config;
+// this used to split the title at its first dot, which is a rule about one
+// domain living two files from anything that mentions it.
 site_brand :: proc(w: ^Website, allocator := context.allocator) -> string {
-	title := html_escape(w.config.title, allocator)
-	dot := strings.index_byte(title, '.')
-	if dot < 0 {
-		return title
+	head := html_escape(w.config.brand.head, allocator)
+	if w.config.brand.accent == "" {
+		return head
 	}
-	return fmt.aprintf(`%s<span class="accent">%s</span>`, title[:dot], title[dot:], allocator = allocator)
+	return fmt.aprintf(
+		`%s<span class="accent">%s</span>`,
+		head,
+		html_escape(w.config.brand.accent, allocator),
+		allocator = allocator,
+	)
 }
 
 // "en-us" -> "en", for the html lang attribute.

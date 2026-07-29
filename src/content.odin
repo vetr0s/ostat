@@ -76,7 +76,7 @@ collect_content :: proc(w: ^Website) -> bool {
 	home.is_home = true
 	home.url = "/"
 	home.out_path = "index.html"
-	home.feed_url = "/index.xml"
+	home.feed_url = ROOT_FEED_PATH
 	home.notes = make([dynamic]Note, w.perm)
 	append(&w.pages, home)
 

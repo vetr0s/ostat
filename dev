@@ -15,20 +15,6 @@ SITE="site"
 OUT="public"
 PORT="${PORT:-1313}"
 
-# site/static/resume.pdf is not committed. vetr0s/resume owns it and that repo
-# is private, so there is no anonymous URL to curl: it needs an authenticated
-# gh. Anyone without access simply does not get the file, and the demo's
-# /resume.pdf link 404s locally, which is not worth a warning on every run.
-if [ ! -f "$SITE/static/resume.pdf" ] && command -v gh > /dev/null; then
-  tmp="$(mktemp)"
-  if gh api repos/vetr0s/resume/contents/resume.pdf --jq .content 2>/dev/null \
-      | base64 --decode > "$tmp" 2>/dev/null && [ -s "$tmp" ]; then
-    mv "$tmp" "$SITE/static/resume.pdf"
-  else
-    rm -f "$tmp"
-  fi
-fi
-
 ./build.sh debug
 
 case "${1:-}" in
