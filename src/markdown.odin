@@ -175,7 +175,7 @@ apply_inline :: proc(w: ^Website, p: ^Page, lines: []Line, style: Note_Style) ->
 		if line.fence {
 			continue
 		}
-		line.text = replace_note_markers(w, p, line.text, style) or_return
+		line.text = replace_note_markers(w, p, line.text, style)
 		line.text = replace_strikethrough(line.text, w.scratch)
 	}
 	return check_notes_used(p)

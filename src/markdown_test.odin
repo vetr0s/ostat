@@ -50,9 +50,38 @@ test_note_marker_before_definition :: proc(t: ^testing.T) {
 }
 
 @(test)
-test_undefined_note_is_an_error :: proc(t: ^testing.T) {
-	_, _, ok := run("A claim[^missing] stands.\n")
+test_unmatched_marker_is_prose :: proc(t: ^testing.T) {
+	// This used to fail the build. `[^` is ordinary text far more often than
+	// it is a note, so an unresolved one is left alone.
+	out, notes, ok := run("A claim[^missing] stands.\n")
+	testing.expect_value(t, ok, true)
+	testing.expect_value(t, len(notes), 0)
+	testing.expect(t, strings.contains(out, "[^missing]"), "left as written")
+}
+
+@(test)
+test_regex_in_a_code_span_builds :: proc(t: ^testing.T) {
+	// The reported bug: a POSIX character class aborted the build with an
+	// error naming a note nobody wrote.
+	out, _, ok := run("Match a non-letter with `[^a-z]+` in your pattern.\n")
+	testing.expect_value(t, ok, true)
+	testing.expect(t, strings.contains(out, "[^a-z]+"), "the class survives intact")
+}
+
+@(test)
+test_a_mistyped_label_is_still_caught :: proc(t: ^testing.T) {
+	// Nothing resolves the marker, so it stays prose — but the definition it
+	// was meant to reach goes unused, and that fails the build.
+	_, _, ok := run("A claim[^tpyo].\n\n[^typo]: The note.\n")
 	testing.expect_value(t, ok, false)
+}
+
+@(test)
+test_a_real_marker_after_an_unmatched_one_still_resolves :: proc(t: ^testing.T) {
+	out, _, ok := run("A `[^set]` then a claim[^real].\n\n[^real]: Note.\n")
+	testing.expect_value(t, ok, true)
+	testing.expect(t, strings.contains(out, "[^set]"), "the first is prose")
+	testing.expect(t, strings.contains(out, `class="sidenote"`), "the second is a note")
 }
 
 @(test)

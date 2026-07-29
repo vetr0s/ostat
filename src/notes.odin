@@ -115,19 +115,23 @@ validate_note_label :: proc(p: ^Page, label: string) -> bool {
 	return true
 }
 
-// Replaces every `[^label]` in a line. Emitted on one line so that a marker
-// inside a table cell stays inside its cell.
-replace_note_markers :: proc(
-	w: ^Website,
-	p: ^Page,
-	text: string,
-	style: Note_Style,
-) -> (
-	string,
-	bool,
-) {
+/*
+Replaces every `[^label]` that names a real definition. Emitted on one line so
+that a marker inside a table cell stays inside its cell.
+
+An unresolved marker is left as prose rather than failing the build. `[^` is
+ordinary text far more often than it is a note: regexes and POSIX character
+classes (`[^a-z]`), array indexing, BibTeX keys. Treating every one as a note
+made a regex in backticks abort the build with an error naming a note the
+author never wrote.
+
+A mistyped label is still caught, from the other side: the definition it was
+meant to reach goes unreferenced, and check_notes_used fails the build naming
+the label that exists. That catches the typo without guessing at prose.
+*/
+replace_note_markers :: proc(w: ^Website, p: ^Page, text: string, style: Note_Style) -> string {
 	if !strings.contains(text, MARKER_OPEN) {
-		return text, true
+		return text
 	}
 
 	b := strings.builder_make(w.scratch)
@@ -139,16 +143,19 @@ replace_note_markers :: proc(
 			break
 		}
 		after := rest[start + len(MARKER_OPEN):]
+
+		note: ^Note
 		close := strings.index_byte(after, ']')
-		if close < 0 {
-			break
+		if close >= 0 {
+			note = find_note(p, after[:close])
 		}
 
-		label := after[:close]
-		note := find_note(p, label)
 		if note == nil {
-			fmt.eprintfln("ostat: %s: note %q is used but never defined", p.source, label)
-			return "", false
+			// Not a marker. Keep the `[^` and carry on looking past it, so a
+			// real marker later in the same line is still found.
+			strings.write_string(&b, rest[:start + len(MARKER_OPEN)])
+			rest = after
+			continue
 		}
 
 		// Numbering follows the markers, not the order the definitions were
@@ -169,7 +176,7 @@ replace_note_markers :: proc(
 	}
 
 	strings.write_string(&b, rest)
-	return strings.to_string(b), true
+	return strings.to_string(b)
 }
 
 @(private = "file")
