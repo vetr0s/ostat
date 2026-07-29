@@ -4,6 +4,13 @@ import "core:fmt"
 import "core:strings"
 
 // Escaping, truncation, and the date and title shapes the layouts need.
+//
+// Nothing here reaches into the renderer. The description limit used to live
+// in render.odin and be read from down here, which made the dependency run
+// backwards and the layering unreadable.
+
+// Hugo truncated the meta description at this many characters.
+DESCRIPTION_LIMIT :: 160
 
 @(rodata)
 MONTHS := [13]string {

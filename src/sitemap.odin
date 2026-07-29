@@ -12,6 +12,10 @@ carries a date.
 */
 
 render_sitemap :: proc(w: ^Website) -> bool {
+	return write_output(w, "sitemap.xml", build_sitemap(w))
+}
+
+build_sitemap :: proc(w: ^Website) -> string {
 	b := strings.builder_make(w.scratch)
 
 	strings.write_string(&b, `<?xml version="1.0" encoding="utf-8" standalone="yes"?>` + "\n")
@@ -27,5 +31,5 @@ render_sitemap :: proc(w: ^Website) -> bool {
 	}
 
 	strings.write_string(&b, "</urlset>\n")
-	return write_output(w, "sitemap.xml", strings.to_string(b))
+	return strings.to_string(b)
 }

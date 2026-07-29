@@ -96,7 +96,11 @@ LANGS := []Lang {
 
 // Writes a fenced code block, highlighted when there is a lexer for its
 // language and escaped-but-plain when there is not.
-write_code_block :: proc(w: ^Website, b: ^strings.Builder, lang_name, code: string) {
+write_code_block :: proc(
+	b: ^strings.Builder,
+	lang_name, code: string,
+	allocator := context.allocator,
+) {
 	lang := find_lang(lang_name)
 
 	strings.write_string(b, "<pre><code")
@@ -104,15 +108,15 @@ write_code_block :: proc(w: ^Website, b: ^strings.Builder, lang_name, code: stri
 	case lang == nil && lang_name == "":
 		strings.write_string(b, ">")
 	case lang == nil:
-		fmt.sbprintf(b, ` class="language-%s">`, html_escape(lang_name, w.scratch))
+		fmt.sbprintf(b, ` class="language-%s">`, html_escape(lang_name, allocator))
 	case:
-		fmt.sbprintf(b, ` class="chroma language-%s">`, html_escape(lang_name, w.scratch))
+		fmt.sbprintf(b, ` class="chroma language-%s">`, html_escape(lang_name, allocator))
 	}
 
 	if lang == nil {
-		strings.write_string(b, html_escape(code, w.scratch))
+		strings.write_string(b, html_escape(code, allocator))
 	} else {
-		write_tokens(w, b, lang^, code)
+		write_tokens(b, lang^, code, allocator)
 	}
 
 	strings.write_string(b, "</code></pre>")
@@ -134,34 +138,39 @@ find_lang :: proc(name: string) -> ^Lang {
 }
 
 @(private = "file")
-write_tokens :: proc(w: ^Website, b: ^strings.Builder, lang: Lang, code: string) {
+write_tokens :: proc(
+	b: ^strings.Builder,
+	lang: Lang,
+	code: string,
+	allocator := context.allocator,
+) {
 	i := 0
 	for i < len(code) {
 		if n := scan_comment(lang, code, i); n > 0 {
-			write_span(w, b, "c", code[i:i + n])
+			write_span(b, "c", code[i:i + n], allocator)
 			i += n
 			continue
 		}
 		if n := scan_string(lang, code, i); n > 0 {
-			write_span(w, b, "s", code[i:i + n])
+			write_span(b, "s", code[i:i + n], allocator)
 			i += n
 			continue
 		}
 		if is_digit(code[i]) {
 			n := scan_number(code, i)
-			write_span(w, b, "m", code[i:i + n])
+			write_span(b, "m", code[i:i + n], allocator)
 			i += n
 			continue
 		}
 		if is_ident_start(code[i]) {
 			n := scan_ident(code, i)
 			word := code[i:i + n]
-			write_span(w, b, classify(lang, code, word, i + n), word)
+			write_span(b, classify(lang, code, word, i + n), word, allocator)
 			i += n
 			continue
 		}
 
-		strings.write_string(b, html_escape(code[i:i + 1], w.scratch))
+		strings.write_string(b, html_escape(code[i:i + 1], allocator))
 		i += 1
 	}
 }
@@ -191,8 +200,8 @@ classify :: proc(lang: Lang, code, word: string, after: int) -> string {
 }
 
 @(private = "file")
-write_span :: proc(w: ^Website, b: ^strings.Builder, class, text: string) {
-	escaped := html_escape(text, w.scratch)
+write_span :: proc(b: ^strings.Builder, class, text: string, allocator := context.allocator) {
+	escaped := html_escape(text, allocator)
 	if class == "" {
 		strings.write_string(b, escaped)
 		return

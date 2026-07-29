@@ -48,8 +48,12 @@ render_feeds :: proc(w: ^Website) -> bool {
 		bodies[i] = feed_item_content(w, p) or_return
 	}
 
-	write_feed(w, "/index.xml", "/", items, bodies) or_return
-	write_feed(w, "/" + BLOG_SECTION + "/index.xml", "/" + BLOG_SECTION + "/", items, bodies) or_return
+	write_output(w, "index.xml", build_feed(w, "/index.xml", "/", items, bodies)) or_return
+	write_output(
+		w,
+		BLOG_SECTION + "/index.xml",
+		build_feed(w, "/" + BLOG_SECTION + "/index.xml", "/" + BLOG_SECTION + "/", items, bodies),
+	) or_return
 	return true
 }
 
@@ -116,8 +120,12 @@ next_root_relative :: proc(html: string) -> int {
 	}
 }
 
-@(private = "file")
-write_feed :: proc(w: ^Website, feed_url, page_url: string, items: []^Page, bodies: []string) -> bool {
+build_feed :: proc(
+	w: ^Website,
+	feed_url, page_url: string,
+	items: []^Page,
+	bodies: []string,
+) -> string {
 	b := strings.builder_make(w.scratch)
 
 	strings.write_string(&b, `<?xml version="1.0" encoding="utf-8" standalone="yes"?>` + "\n")
@@ -151,7 +159,7 @@ write_feed :: proc(w: ^Website, feed_url, page_url: string, items: []^Page, bodi
 	}
 
 	strings.write_string(&b, "  </channel>\n</rss>\n")
-	return write_output(w, feed_url[1:], strings.to_string(b))
+	return strings.to_string(b)
 }
 
 // RFC 822, which is what RSS wants. Front matter carries a date and no time,

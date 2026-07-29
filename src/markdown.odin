@@ -122,7 +122,7 @@ write_fenced_code :: proc(w: ^Website, b: ^strings.Builder, lines: []Line, start
 	}
 
 	block := strings.builder_make(w.scratch)
-	write_code_block(w, &block, lang, strings.to_string(body))
+	write_code_block(&block, lang, strings.to_string(body), w.scratch)
 
 	open_html_block(b)
 	if fence.indent > 0 {

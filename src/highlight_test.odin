@@ -7,7 +7,7 @@ import "core:testing"
 hl :: proc(lang, code: string) -> string {
 	w := test_website()
 	b := strings.builder_make(w.scratch)
-	write_code_block(w, &b, lang, code)
+	write_code_block(&b, lang, code, w.scratch)
 	return strings.to_string(b)
 }
 

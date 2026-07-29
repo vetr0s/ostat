@@ -15,12 +15,9 @@ page's Elsewhere list.
 
 HEAD_STATIC :: #load("html/head.html", string)
 
-// Hugo truncated the meta description at this many characters.
-DESCRIPTION_LIMIT :: 160
-
 render_all :: proc(w: ^Website) -> bool {
 	for p in w.pages {
-		render_page(w, p) or_return
+		write_output(w, p.out_path, build_page(w, p)) or_return
 	}
 	render_feeds(w) or_return
 	render_sitemap(w) or_return
@@ -28,7 +25,10 @@ render_all :: proc(w: ^Website) -> bool {
 	return true
 }
 
-render_page :: proc(w: ^Website, p: ^Page) -> bool {
+// Building a page and writing it are separate so that a layout can be asserted
+// on without touching the filesystem. Fused, none of this file was reachable
+// from a test.
+build_page :: proc(w: ^Website, p: ^Page) -> string {
 	b := strings.builder_make(w.scratch)
 
 	fmt.sbprintf(&b, "<!DOCTYPE html>\n<html lang=\"%s\">\n<head>\n", html_lang(w))
@@ -47,7 +47,7 @@ render_page :: proc(w: ^Website, p: ^Page) -> bool {
 	}
 
 	strings.write_string(&b, "  </main>\n</body>\n</html>\n")
-	return write_output(w, p.out_path, strings.to_string(b))
+	return strings.to_string(b)
 }
 
 @(private = "file")
