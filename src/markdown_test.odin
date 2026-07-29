@@ -158,3 +158,33 @@ test_a_span_does_not_leak_past_a_paragraph :: proc(t: ^testing.T) {
 	testing.expect_value(t, ok, true)
 	testing.expect(t, strings.contains(out, "<del>struck</del>"), "next paragraph is prose again")
 }
+
+@(test)
+test_a_longer_fence_holds_a_shorter_one :: proc(t: ^testing.T) {
+	// How you document Markdown. The inner run must not close the outer block.
+	body := "````text\n```\nnot ~~struck~~ and not a note[^x]\n```\n````\n"
+	out, notes, ok := run(body)
+	testing.expect_value(t, ok, true)
+	testing.expect_value(t, len(notes), 0)
+	testing.expect(t, strings.contains(out, "~~struck~~"), "inner content untouched")
+	testing.expect(t, strings.contains(out, "[^x]"), "marker untouched")
+}
+
+@(test)
+test_a_fence_closes_only_on_its_own_character :: proc(t: ^testing.T) {
+	// A ~~~ line inside a ``` block is content, not a closing fence.
+	out, _, ok := run("```\n~~~\n~~struck~~\n```\n\nA ~~real~~ one after.\n")
+	testing.expect_value(t, ok, true)
+	testing.expect(t, strings.contains(out, "~~struck~~"), "inside the block, untouched")
+	testing.expect(t, strings.contains(out, "<del>real</del>"), "outside it, rewritten")
+}
+
+@(test)
+test_a_closing_fence_takes_no_info_string :: proc(t: ^testing.T) {
+	// text, so the highlighter does not wrap tokens and the assertion can be
+	// on the literal content.
+	out, _, ok := run("```text\ninside\n```text\nstill inside\n```\n")
+	testing.expect_value(t, ok, true)
+	testing.expect(t, strings.contains(out, "still inside"), "the middle line did not close it")
+	testing.expect(t, strings.contains(out, "```text"), "it is content, not markup")
+}

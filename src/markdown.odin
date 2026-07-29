@@ -150,21 +150,68 @@ split_source_lines :: proc(src: string, allocator := context.allocator) -> []Lin
 	raw := strings.split_lines(src, allocator)
 	lines := make([]Line, len(raw), allocator)
 
+	open: Fence
 	in_fence := false
+
 	for text, i in raw {
-		marker := is_fence_marker(text)
-		lines[i] = Line{text, in_fence || marker, marker}
-		if marker {
-			in_fence = !in_fence
+		fence, is_fence := scan_fence(text)
+		marker := false
+
+		switch {
+		case !in_fence && is_fence:
+			open, in_fence, marker = fence, true, true
+		case in_fence && is_fence && closes(fence, open, text):
+			in_fence, marker = false, true
 		}
+
+		lines[i] = Line{text, in_fence || marker, marker}
 	}
 	return lines
 }
 
+// A fenced block's opening run, which its closing run has to answer.
 @(private = "file")
-is_fence_marker :: proc(text: string) -> bool {
-	t := strings.trim_left_space(text)
-	return strings.has_prefix(t, "```") || strings.has_prefix(t, "~~~")
+Fence :: struct {
+	char:   u8, // '`' or '~'
+	length: int,
+	indent: int,
+}
+
+@(private = "file")
+scan_fence :: proc(text: string) -> (f: Fence, ok: bool) {
+	indent := 0
+	for indent < len(text) && indent < 4 && text[indent] == ' ' {
+		indent += 1
+	}
+	if indent >= len(text) {
+		return
+	}
+
+	char := text[indent]
+	if char != '`' && char != '~' {
+		return
+	}
+
+	length := 0
+	for indent + length < len(text) && text[indent + length] == char {
+		length += 1
+	}
+	if length < 3 {
+		return
+	}
+	return Fence{char, length, indent}, true
+}
+
+// CommonMark: a fence closes only on the same character, a run at least as
+// long, and nothing after it. Matching on the prefix alone closed a ```` block
+// at the ``` example inside it — which is how one documents Markdown, and
+// which left the rest of the block being rewritten as prose.
+@(private = "file")
+closes :: proc(f, open: Fence, text: string) -> bool {
+	if f.char != open.char || f.length < open.length {
+		return false
+	}
+	return strings.trim_space(text[f.indent + f.length:]) == ""
 }
 
 /*
