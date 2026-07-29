@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notes and Tables · vetr0s.dev</title>
+<meta name="description" content="Margin notes, a table, and a repeated reference.">
+<meta name="author" content="Nathan Tebbs">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Notes and Tables · vetr0s.dev">
+<meta property="og:description" content="Margin notes, a table, and a repeated reference.">
+<meta property="og:url" content="https://example.test/blog/notes-and-tables/">
+<script>
+  (function () {
+    var t = localStorage.getItem('theme');
+    if (t === 'light' || t === 'dark') {
+      document.documentElement.setAttribute('data-theme', t);
+    }
+  })();
+</script>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<!-- The roman cut starts downloading here, during HTML parse, rather than
+     after the stylesheet is parsed and a glyph is first wanted. font-display
+     is optional, so being ready by first paint is the difference between the
+     page being set in ET Book and being set in Palatino. crossorigin is
+     required on a font preload even same-origin, or the fetch is made twice. -->
+<link rel="preload" href="/font/et-book-roman-line-figures.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/reset.css">
+<link rel="stylesheet" href="/css/style.css">
+<script src="/js/theme.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('a[href]').forEach(function (a) {
+      if (a.hostname && a.hostname !== location.hostname) {
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+      }
+    });
+  });
+</script>
+</head>
+<body>
+  <header>
+<nav class="crumbs" aria-label="Breadcrumb">
+  <p class="trail">
+    <a href="/">vetr0s<span class="accent">.dev</span></a>
+    <span class="sep">/</span>
+    <a href="/blog/">blog</a>
+  </p>
+  <button id="theme-toggle" type="button" aria-label="Toggle color theme"></button>
+</nav>
+  </header>
+  <main>
+<article>
+  <h1>Notes and Tables</h1>
+  <time datetime="2025-06-02">June 2, 2025</time>
+<p>A claim<label for="sn-first" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-first" class="margin-toggle"><span class="sidenote">The first note, with a <a href="/about/">link</a> and <code>code</code> in it.</span> and a second one<label for="sn-second" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-second" class="margin-toggle"><span class="sidenote">The second note.</span>. The first is referenced again
+here<label for="sn-first" class="margin-toggle sidenote-number"></label>, which must not repeat its id.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th align="center">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a</code></td>
+<td align="center">first</td>
+</tr>
+<tr>
+<td><code>b</code></td>
+<td align="center">second</td>
+</tr>
+</tbody>
+</table>
+<p>Text with <del>a struck phrase</del> and <strong>bold</strong> and <em>italic</em>.</p>
+</article>
+  </main>
+</body>
+</html>

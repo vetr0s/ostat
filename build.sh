@@ -15,6 +15,11 @@
 
 set -euo pipefail
 
+# sed treats its input as bytes under LC_ALL=C. A test can print deliberately
+# invalid UTF-8, and sed otherwise dies with "illegal byte sequence" and takes
+# the failure message down with it.
+export LC_ALL=C
+
 cd "$(dirname "$0")"
 
 MODE="${1:-debug}"

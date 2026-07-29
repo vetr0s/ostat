@@ -58,7 +58,6 @@ render_feeds :: proc(w: ^Website) -> bool {
 }
 
 // The post as a feed reader should see it: full content, endnotes appended.
-@(private = "file")
 feed_item_content :: proc(w: ^Website, p: ^Page) -> (content: string, ok: bool) {
 	src := preprocess(w, p, .Endnote) or_return
 

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code · vetr0s.dev</title>
+<meta name="description" content="Code spans and blocks, including the shapes that used to break the build.">
+<meta name="author" content="Nathan Tebbs">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Code · vetr0s.dev">
+<meta property="og:description" content="Code spans and blocks, including the shapes that used to break the build.">
+<meta property="og:url" content="https://example.test/blog/code/">
+<script>
+  (function () {
+    var t = localStorage.getItem('theme');
+    if (t === 'light' || t === 'dark') {
+      document.documentElement.setAttribute('data-theme', t);
+    }
+  })();
+</script>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<!-- The roman cut starts downloading here, during HTML parse, rather than
+     after the stylesheet is parsed and a glyph is first wanted. font-display
+     is optional, so being ready by first paint is the difference between the
+     page being set in ET Book and being set in Palatino. crossorigin is
+     required on a font preload even same-origin, or the fetch is made twice. -->
+<link rel="preload" href="/font/et-book-roman-line-figures.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/reset.css">
+<link rel="stylesheet" href="/css/style.css">
+<script src="/js/theme.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('a[href]').forEach(function (a) {
+      if (a.hostname && a.hostname !== location.hostname) {
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+      }
+    });
+  });
+</script>
+</head>
+<body>
+  <header>
+<nav class="crumbs" aria-label="Breadcrumb">
+  <p class="trail">
+    <a href="/">vetr0s<span class="accent">.dev</span></a>
+    <span class="sep">/</span>
+    <a href="/blog/">blog</a>
+  </p>
+  <button id="theme-toggle" type="button" aria-label="Toggle color theme"></button>
+</nav>
+  </header>
+  <main>
+<article>
+  <h1>Code</h1>
+  <time datetime="2025-06-01">June 1, 2025</time>
+<p>A regex in a span: <code>[^a-z]+</code>, and tildes in a span: <code>a ~~ b</code>. Neither is a
+note or a strikethrough.</p>
+<pre><code class="chroma language-odin">main :: <span class="k">proc</span>() {
+	x := <span class="m">1</span> <span class="c">// a comment</span>
+}
+</code></pre>
+<p>Steps, with a block that has to stay inside its item:</p>
+<ol>
+<li>
+<p>First step.</p>
+<pre><code class="chroma language-bash"><span class="nb">echo</span> hi&#10;</code></pre>
+</li>
+<li>
+<p>Second step.</p>
+</li>
+</ol>
+<pre><code class="language-text">```
+A fence inside a longer fence.
+```
+</code></pre>
+</article>
+  </main>
+</body>
+</html>

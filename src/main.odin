@@ -20,6 +20,7 @@ build options:
     -o <dir>          output directory (default: public)
     -drafts           include pages marked draft
     -future           include pages dated after today
+    -today <date>     treat this YYYY-MM-DD as today, instead of the clock
     -base-url <url>   override the configured base URL
 
 site-dir defaults to the current directory. It must contain content/, and may
@@ -90,7 +91,9 @@ cmd_build :: proc(args: []string) -> bool {
 	render_content(&w) or_return
 	render_all(&w) or_return
 
-	fmt.printfln("built %d pages into %s", len(w.pages) + 1, w.opts.out_dir)
+	// The synthesised home page is already in w.pages, so this counted it
+	// twice and every build over-reported by one.
+	fmt.printfln("built %d pages into %s", len(w.pages), w.opts.out_dir)
 	return true
 }
 
@@ -116,6 +119,17 @@ parse_build_args :: proc(w: ^Website, args: []string) -> bool {
 				return false
 			}
 			w.opts.base_url = args[i]
+		case "-today":
+			i += 1
+			if i >= len(args) {
+				fmt.eprintln("ostat: -today needs a date")
+				return false
+			}
+			if _, _, _, ok := parse_date(args[i]); !ok {
+				fmt.eprintfln("ostat: -today: %q is not a YYYY-MM-DD date", args[i])
+				return false
+			}
+			w.today = args[i]
 		case "-drafts":
 			w.opts.drafts = true
 		case "-future":

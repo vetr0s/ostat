@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vetr0s.dev</title>
+<meta name="description" content="Nathan Tebbs, software engineer. Writing, projects, and a page about who I am.">
+<meta name="author" content="Nathan Tebbs">
+<meta property="og:type" content="website">
+<meta property="og:title" content="vetr0s.dev">
+<meta property="og:description" content="Nathan Tebbs, software engineer. Writing, projects, and a page about who I am.">
+<meta property="og:url" content="https://example.test/">
+<link rel="alternate" type="application/rss+xml" href="https://example.test/index.xml" title="vetr0s.dev">
+<script>
+  (function () {
+    var t = localStorage.getItem('theme');
+    if (t === 'light' || t === 'dark') {
+      document.documentElement.setAttribute('data-theme', t);
+    }
+  })();
+</script>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<!-- The roman cut starts downloading here, during HTML parse, rather than
+     after the stylesheet is parsed and a glyph is first wanted. font-display
+     is optional, so being ready by first paint is the difference between the
+     page being set in ET Book and being set in Palatino. crossorigin is
+     required on a font preload even same-origin, or the fetch is made twice. -->
+<link rel="preload" href="/font/et-book-roman-line-figures.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/reset.css">
+<link rel="stylesheet" href="/css/style.css">
+<script src="/js/theme.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('a[href]').forEach(function (a) {
+      if (a.hostname && a.hostname !== location.hostname) {
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+      }
+    });
+  });
+</script>
+</head>
+<body>
+  <header>
+<nav class="crumbs" aria-label="Breadcrumb">
+  <p class="trail">
+    <span class="here" aria-current="page">vetr0s<span class="accent">.dev</span></span>
+  </p>
+  <button id="theme-toggle" type="button" aria-label="Toggle color theme"></button>
+</nav>
+  </header>
+  <main>
+<section id="find-me">
+  <h1>Find Me</h1>
+  <div class="portrait">
+    <img src="/img/gh_profile.jpg" alt="Nathan Tebbs" width="553" height="553" />
+  </div>
+  <dl class="contact-list">
+    <dt>email</dt>
+    <dd><a href="mailto:vetr0s.dev@gmail.com">vetr0s.dev@gmail.com</a></dd>
+    <dt>github</dt>
+    <dd><a href="https://github.com/vetr0s">github.com/vetr0s</a></dd>
+    <dt>linkedin</dt>
+    <dd><a href="https://www.linkedin.com/in/ntebbs">linkedin.com/in/ntebbs</a></dd>
+    <dt>resume</dt>
+    <dd><a href="/resume.pdf">resume.pdf</a></dd>
+  </dl>
+</section>
+
+<section id="elsewhere">
+  <h1>Elsewhere</h1>
+  <ul>
+    <li><a href="/about/">about</a></li>
+    <li><a href="/blog/">blog</a></li>
+    <li><a href="/projects/">projects</a></li>
+    <li><a href="/colophon/">colophon</a></li>
+  </ul>
+</section>
+
+<section id="recent">
+  <div class="section-head">
+    <h1>Recent Posts</h1>
+    <a class="rss-badge" href="/index.xml" title="RSS feed">RSS</a>
+  </div>
+  <article class="post-entry">
+    <a href="/blog/notes-and-tables/">Notes and Tables</a>
+    <time datetime="2025-06-02">2025-06-02</time>
+  </article>
+  <article class="post-entry">
+    <a href="/blog/code/">Code</a>
+    <time datetime="2025-06-01">2025-06-01</time>
+  </article>
+</section>
+  </main>
+</body>
+</html>

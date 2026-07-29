@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>vetr0s.dev</title>
+    <link>https://example.test/blog/</link>
+    <description>Nathan Tebbs, software engineer. Writing, projects, and a page about who I am.</description>
+    <generator>ostat</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 02 Jun 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://example.test/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Notes and Tables</title>
+      <link>https://example.test/blog/notes-and-tables/</link>
+      <pubDate>Mon, 02 Jun 2025 00:00:00 +0000</pubDate>
+      <guid>https://example.test/blog/notes-and-tables/</guid>
+      <description>&lt;p&gt;A claim&lt;sup class=&quot;fn-ref&quot; id=&quot;fnref-1&quot;&gt;&lt;a href=&quot;https://example.test/blog/notes-and-tables/#fn-1&quot; role=&quot;doc-noteref&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; and a second one&lt;sup class=&quot;fn-ref&quot; id=&quot;fnref-2&quot;&gt;&lt;a href=&quot;https://example.test/blog/notes-and-tables/#fn-2&quot; role=&quot;doc-noteref&quot;&gt;2&lt;/a&gt;&lt;/sup&gt;. The first is referenced again
+here&lt;sup class=&quot;fn-ref&quot;&gt;&lt;a href=&quot;https://example.test/blog/notes-and-tables/#fn-1&quot; role=&quot;doc-noteref&quot;&gt;1&lt;/a&gt;&lt;/sup&gt;, which must not repeat its id.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Column&lt;/th&gt;
+&lt;th align=&quot;center&quot;&gt;Meaning&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;a&lt;/code&gt;&lt;/td&gt;
+&lt;td align=&quot;center&quot;&gt;first&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;b&lt;/code&gt;&lt;/td&gt;
+&lt;td align=&quot;center&quot;&gt;second&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Text with &lt;del&gt;a struck phrase&lt;/del&gt; and &lt;strong&gt;bold&lt;/strong&gt; and &lt;em&gt;italic&lt;/em&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;footnotes&quot; role=&quot;doc-endnotes&quot;&gt;
+&lt;ol&gt;
+&lt;li id=&quot;fn-1&quot;&gt;The first note, with a &lt;a href=&quot;https://example.test/about/&quot;&gt;link&lt;/a&gt; and &lt;code&gt;code&lt;/code&gt; in it. &lt;a href=&quot;https://example.test/blog/notes-and-tables/#fnref-1&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/li&gt;
+&lt;li id=&quot;fn-2&quot;&gt;The second note. &lt;a href=&quot;https://example.test/blog/notes-and-tables/#fnref-2&quot;&gt;&amp;#8617;&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    <item>
+      <title>Code</title>
+      <link>https://example.test/blog/code/</link>
+      <pubDate>Sun, 01 Jun 2025 00:00:00 +0000</pubDate>
+      <guid>https://example.test/blog/code/</guid>
+      <description>&lt;p&gt;A regex in a span: &lt;code&gt;[^a-z]+&lt;/code&gt;, and tildes in a span: &lt;code&gt;a ~~ b&lt;/code&gt;. Neither is a
+note or a strikethrough.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;chroma language-odin&quot;&gt;main :: &lt;span class=&quot;k&quot;&gt;proc&lt;/span&gt;() {
+	x := &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;// a comment&lt;/span&gt;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Steps, with a block that has to stay inside its item:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;First step.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;chroma language-bash&quot;&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; hi&amp;#10;&lt;/code&gt;&lt;/pre&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Second step.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre&gt;&lt;code class=&quot;language-text&quot;&gt;```
+A fence inside a longer fence.
+```
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+  </channel>
+</rss>
