@@ -76,31 +76,37 @@ Site_Config :: struct {
 
 // A variable, not a constant. A compile-time constant holding slice fields
 // gives those slices no backing storage to point at.
+// ostat's own documentation, which is the site in site/ and the thing this
+// generator builds to prove it works. Replace the whole literal to build a
+// different site; portrait may be left zeroed if there is no author photo.
+//
+// URLs here are root-relative, so a site is assumed to sit at a domain root
+// rather than under a path.
 @(rodata)
 DEFAULT_SITE := Site_Config {
-	base_url    = "https://vetr0s.dev/",
-	title       = "vetr0s.dev",
-	description = "Nathan Tebbs, software engineer. Writing, projects, and a page about who I am.",
-	author      = "Nathan Tebbs",
+	base_url    = "https://ostat.example/",
+	title       = "ostat",
+	description = "A static site generator written in Odin. Layouts are procedures, not templates.",
+	author      = "ostat",
 	locale      = "en-us",
-	brand       = {head = "vetr0s", accent = ".dev"},
-	portrait    = {src = "/img/gh_profile.jpg", alt = "Nathan Tebbs", width = 553, height = 553},
+	brand       = {head = "ostat", accent = ""},
 	contact     = {
-		{"email",    "vetr0s.dev@gmail.com",   "mailto:vetr0s.dev@gmail.com"},
-		{"github",   "github.com/vetr0s",      "https://github.com/vetr0s"},
-		{"linkedin", "linkedin.com/in/ntebbs", "https://www.linkedin.com/in/ntebbs"},
+		{"source",  "github.com/vetr0s/ostat",         "https://github.com/vetr0s/ostat"},
+		{"issues",  "github.com/vetr0s/ostat/issues",  "https://github.com/vetr0s/ostat/issues"},
+		{"licence", "Unlicense",                       "https://unlicense.org/"},
 	},
 	elsewhere   = {
-		{"about",    "/about/"},
-		{"blog",     "/blog/"},
-		{"projects", "/projects/"},
-		{"colophon", "/colophon/"},
+		{"install",     "/install/"},
+		{"writing",     "/writing/"},
+		{"configuring", "/configuring/"},
+		{"internals",   "/internals/"},
+		{"notes",       "/blog/"},
 	},
 	home        = {
-		contact_heading   = "Find Me",
-		elsewhere_heading = "Elsewhere",
-		recent_heading    = "Recent Posts",
-		nothing_published = "Nothing published yet.",
+		contact_heading   = "ostat",
+		elsewhere_heading = "Documentation",
+		recent_heading    = "Release Notes",
+		nothing_published = "No releases yet.",
 	},
 }
 

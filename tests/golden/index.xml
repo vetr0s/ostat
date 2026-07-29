@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>vetr0s.dev</title>
+    <title>ostat</title>
     <link>https://example.test/</link>
-    <description>Nathan Tebbs, software engineer. Writing, projects, and a page about who I am.</description>
+    <description>A static site generator written in Odin. Layouts are procedures, not templates.</description>
     <generator>ostat</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 02 Jun 2025 00:00:00 +0000</lastBuildDate>

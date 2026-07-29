@@ -49,22 +49,43 @@ test_page_description_falls_back :: proc(t: ^testing.T) {
 
 @(test)
 test_page_title :: proc(t: ^testing.T) {
+	// The site's own title is set here rather than read from DEFAULT_SITE, so
+	// this asserts how a title is composed instead of what one site is called.
 	w := test_website()
+	w.config.title = "Example"
 
 	home := new(Page, w.perm)
 	home.is_home = true
-	testing.expect_value(t, page_title(w, home, w.scratch), "vetr0s.dev")
+	testing.expect_value(t, page_title(w, home, w.scratch), "Example")
 
 	page := new(Page, w.perm)
 	page.title = "About"
-	testing.expect_value(t, page_title(w, page, w.scratch), "About · vetr0s.dev")
+	testing.expect_value(t, page_title(w, page, w.scratch), "About · Example")
 }
 
 @(test)
-test_site_brand_and_lang :: proc(t: ^testing.T) {
+test_site_brand :: proc(t: ^testing.T) {
 	w := test_website()
-	testing.expect_value(t, site_brand(w, w.scratch), `vetr0s<span class="accent">.dev</span>`)
+
+	w.config.brand = {head = "exam", accent = "ple"}
+	testing.expect_value(t, site_brand(w, w.scratch), `exam<span class="accent">ple</span>`)
+
+	// No accent: no span, rather than an empty one.
+	w.config.brand = {head = "plain", accent = ""}
+	testing.expect_value(t, site_brand(w, w.scratch), "plain")
+
+	// Both halves are escaped.
+	w.config.brand = {head = "a&b", accent = "<c>"}
+	testing.expect_value(t, site_brand(w, w.scratch), `a&amp;b<span class="accent">&lt;c&gt;</span>`)
+}
+
+@(test)
+test_html_lang :: proc(t: ^testing.T) {
+	w := test_website()
+	w.config.locale = "en-us"
 	testing.expect_value(t, html_lang(w), "en")
+	w.config.locale = "fr"
+	testing.expect_value(t, html_lang(w), "fr")
 }
 
 @(test)
@@ -81,6 +102,11 @@ test_long_date :: proc(t: ^testing.T) {
 @(test)
 test_abs_url :: proc(t: ^testing.T) {
 	w := test_website()
-	testing.expect_value(t, abs_url(w, "/blog/", w.scratch), "https://vetr0s.dev/blog/")
-	testing.expect_value(t, abs_url(w, "/", w.scratch), "https://vetr0s.dev/")
+	w.config.base_url = "https://example.test/"
+	// The trailing slash on the base must not double up.
+	testing.expect_value(t, abs_url(w, "/blog/", w.scratch), "https://example.test/blog/")
+	testing.expect_value(t, abs_url(w, "/", w.scratch), "https://example.test/")
+
+	w.config.base_url = "https://example.test"
+	testing.expect_value(t, abs_url(w, "/blog/", w.scratch), "https://example.test/blog/")
 }

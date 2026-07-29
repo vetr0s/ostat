@@ -5,3 +5,4 @@ bin/
 *.obj
 *.dSYM/
 .DS_Store
+src.bin

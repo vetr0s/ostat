@@ -6,6 +6,7 @@ import "core:testing"
 @(private = "file")
 endnote_html :: proc(body: string) -> (string, ^Page) {
 	w := test_website()
+	w.config.base_url = "https://example.test/"
 	p := test_page(w, body)
 
 	src, ok := preprocess(w, p, .Endnote)
@@ -48,12 +49,12 @@ test_feed_anchors_are_absolute :: proc(t: ^testing.T) {
 
 	testing.expect(
 		t,
-		strings.contains(out, `href="https://vetr0s.dev/blog/test/#fn-1"`),
+		strings.contains(out, `href="https://example.test/blog/test/#fn-1"`),
 		"marker points at the post, not the reader's document",
 	)
 	testing.expect(
 		t,
-		strings.contains(out, `href="https://vetr0s.dev/blog/test/#fnref-1"`),
+		strings.contains(out, `href="https://example.test/blog/test/#fnref-1"`),
 		"back-link points at the post",
 	)
 }
@@ -97,11 +98,12 @@ test_page_without_notes_gets_no_endnote_list :: proc(t: ^testing.T) {
 @(test)
 test_feed_urls_are_absolute :: proc(t: ^testing.T) {
 	w := test_website()
+	w.config.base_url = "https://example.test/"
 	in_ := `<a href="/colophon/">c</a> <img src="/img/a.png"> <a href="https://x.dev/">x</a>`
 	out := absolutize_urls(w, in_, w.scratch)
 
-	testing.expect(t, strings.contains(out, `href="https://vetr0s.dev/colophon/"`), "href absolute")
-	testing.expect(t, strings.contains(out, `src="https://vetr0s.dev/img/a.png"`), "src absolute")
+	testing.expect(t, strings.contains(out, `href="https://example.test/colophon/"`), "href absolute")
+	testing.expect(t, strings.contains(out, `src="https://example.test/img/a.png"`), "src absolute")
 	testing.expect(t, strings.contains(out, `href="https://x.dev/"`), "external link untouched")
 }
 

@@ -8,41 +8,78 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
       # vendor:commonmark links "system:cmark", so the library has to be here
-      # before anything compiles.
-      - name: Install cmark
+      # before anything compiles. The two runners find it in different places,
+      # which is the whole reason build.sh searches rather than assuming.
+      - name: Install cmark (Linux)
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libcmark-dev
+      - name: Install cmark (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmark
 
       - uses: laytan/setup-odin@v2
         with:
           release: false
           branch: master
 
+      # Named so a failure is attributable: this builds Odin from master, so a
+      # red run is as likely to be upstream as it is to be us.
+      - name: Toolchain versions
+        run: |
+          odin version
+          echo "cmark: $(pkg-config --modversion libcmark 2>/dev/null || echo unknown)"
+
       - name: Check
-        run: odin check src
+        run: odin check src -vet-unused -vet-shadowing
 
       - name: Test
         run: ./build.sh test
 
-      - name: Build the example site
+      - name: Build the documentation site
         run: |
           ./build.sh release
           ./build/release/ostat build site -o public
 
-      # A page that stopped being written is the failure this catches.
+      # Every URL the sitemap advertises has to exist on disk, and every source
+      # page has to produce one. Slug-independent, so replacing the content
+      # cannot silently delete the coverage.
       - name: Verify output
         run: |
           set -eux
-          test -s public/index.html
-          test -s public/index.xml
-          test -s public/blog/index.xml
-          test -s public/blog/kitchen-sink/index.html
-          test -s public/sitemap.xml
+          python3 - <<'EOF'
+          import os, sys, xml.etree.ElementTree as ET
+          ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+          locs = [e.text for e in ET.parse("public/sitemap.xml").findall(".//s:loc", ns)]
+          assert locs, "sitemap is empty"
+          for loc in locs:
+              rel = loc.split("://", 1)[1].split("/", 1)[1]
+              path = os.path.join("public", rel, "index.html")
+              assert os.path.getsize(path) > 0, f"{loc} -> {path} missing or empty"
+          print(f"{len(locs)} urls, all present")
+          EOF
+
+          # One .md in, one .html out, plus the synthesised home page.
+          md=$(find site/content -name '*.md' | wc -l)
+          html=$(find public -name index.html | wc -l)
+          [ "$html" -eq "$((md + 1))" ]
+
+          # The feeds must carry items, not merely parse.
+          python3 - <<'EOF'
+          import xml.etree.ElementTree as ET
+          for f in ("public/index.xml", "public/blog/index.xml"):
+              items = ET.parse(f).findall(".//item")
+              assert items, f"{f} has no items"
+          print("feeds carry items")
+          EOF
+
           test -s public/css/style.css
-          for f in index.xml blog/index.xml sitemap.xml; do
-            python3 -c "import xml.dom.minidom,sys; xml.dom.minidom.parse('public/$f')"
-          done
+          test -s public/font/et-book-roman-line-figures.woff2

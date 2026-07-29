@@ -114,16 +114,19 @@ write_header :: proc(w: ^Website, b: ^strings.Builder, p: ^Page) {
 
 @(private = "file")
 write_home :: proc(w: ^Website, b: ^strings.Builder) {
-	p := w.config.portrait
 	fmt.sbprintfln(b, `<section id="find-me">`+"\n"+`  <h1>%s</h1>`, html_escape(w.config.home.contact_heading, w.scratch))
-	fmt.sbprintfln(
-		b,
-		`  <div class="portrait">`+"\n"+`    <img src="%s" alt="%s" width="%d" height="%d" />`+"\n"+`  </div>`,
-		p.src,
-		html_escape(p.alt, w.scratch),
-		p.width,
-		p.height,
-	)
+
+	// Optional: a site without an author photo should not emit a broken image.
+	if p := w.config.portrait; p.src != "" {
+		fmt.sbprintfln(
+			b,
+			`  <div class="portrait">`+"\n"+`    <img src="%s" alt="%s" width="%d" height="%d" />`+"\n"+`  </div>`,
+			p.src,
+			html_escape(p.alt, w.scratch),
+			p.width,
+			p.height,
+		)
+	}
 	strings.write_string(b, "  <dl class=\"contact-list\">\n")
 	for c in w.config.contact {
 		fmt.sbprintfln(b, "    <dt>%s</dt>", c.label)
