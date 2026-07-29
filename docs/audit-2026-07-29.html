@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ostat — project audit</title>
+<style>
+/* ============================================================
+   Standard HTML — house style for plans, audits, and design docs.
+   Deliberately project-agnostic: this never adopts a project's theme.
+   Plain document on a plain background. Legibility over decoration.
+   ============================================================ */
+
+:root {
+  --bg:        #fbfbf9;
+  --fg:        #1a1a1a;
+  --fg-muted:  #5c5c5c;
+  --rule:      #d4d4cf;
+  --surface:   #f0f0ec;
+  --link:      #0b4fa8;
+  --visited:   #6b3fa0;
+  --accent:    #8a5a00;
+  --good:      #1c6b2e;
+  --bad:       #a11b1b;
+  --measure:   72em;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:       #101010;
+    --fg:       #e6e6e3;
+    --fg-muted: #9a9a95;
+    --rule:     #3a3a3a;
+    --surface:  #1c1c1c;
+    --link:     #89a6ff;
+    --visited:  #d98cff;
+    --accent:   #e0a33a;
+    --good:     #52c96a;
+    --bad:      #ff6b52;
+  }
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--fg);
+  background: var(--bg);
+  margin: 0;
+  padding: 2.5rem 1.25rem 6rem;
+}
+
+/* Left-justified, not centered: the document hugs the left gutter and simply
+   stops at the measure. */
+main, .doc {
+  max-width: var(--measure);
+  margin: 0;
+}
+
+/* --- headings ------------------------------------------------ */
+
+h1, h2, h3, h4 {
+  line-height: 1.25;
+  font-weight: 600;
+  margin: 2.2em 0 0.6em;
+}
+h1 {
+  font-size: 1.9rem;
+  margin-top: 0;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--rule);
+}
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.1rem; }
+h4 { font-size: 1rem; color: var(--fg-muted); }
+
+/* Byline directly under the h1: date, repo, commit, author. */
+.meta {
+  color: var(--fg-muted);
+  font-size: 0.875rem;
+  margin: -0.2em 0 2.5em;
+}
+.meta > * + *::before { content: " · "; }
+
+/* --- prose --------------------------------------------------- */
+
+p, ul, ol, dl, table, pre, blockquote { margin: 0 0 1.1em; }
+
+a          { color: var(--link); }
+a:visited  { color: var(--visited); }
+
+strong { font-weight: 600; }
+
+small, .muted { color: var(--fg-muted); font-size: 0.875rem; }
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 2.5em 0;
+}
+
+blockquote {
+  margin-left: 0;
+  padding: 0.1em 0 0.1em 1em;
+  border-left: 3px solid var(--rule);
+  color: var(--fg-muted);
+}
+
+ul, ol { padding-left: 1.4em; }
+li { margin: 0.25em 0; }
+li > ul, li > ol { margin: 0.25em 0; }
+
+/* --- code ---------------------------------------------------- */
+
+code, kbd, samp, .path {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.875em;
+}
+
+code {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.1em 0.3em;
+}
+
+/* File paths and identifiers: mono, but no box. */
+.path { color: var(--fg-muted); }
+
+pre {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  padding: 0.75em 0.9em;
+  overflow-x: auto;
+  line-height: 1.45;
+}
+pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+}
+
+/* --- tables -------------------------------------------------- */
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9375rem;
+}
+th, td {
+  border: 1px solid var(--rule);
+  padding: 0.45em 0.7em;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: var(--surface);
+  font-weight: 600;
+}
+
+/* Wide tables scroll inside their own box; the page never scrolls sideways. */
+.scroll { overflow-x: auto; margin: 0 0 1.1em; }
+.scroll table { margin: 0; }
+
+/* --- callouts ------------------------------------------------ */
+
+.note, .warn, .ok {
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--fg-muted);
+  background: var(--surface);
+  padding: 0.7em 0.9em;
+  margin: 0 0 1.1em;
+}
+.note > :last-child, .warn > :last-child, .ok > :last-child { margin-bottom: 0; }
+.warn { border-left-color: var(--accent); }
+.ok   { border-left-color: var(--good); }
+
+.note-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin-bottom: 0.3em;
+}
+
+/* --- status tags --------------------------------------------- */
+
+.tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 0.05em 0.4em;
+  white-space: nowrap;
+  color: var(--fg-muted);
+}
+.tag-good { color: var(--good); }
+.tag-warn { color: var(--accent); }
+.tag-bad  { color: var(--bad); }
+
+/* --- task lists ---------------------------------------------- */
+
+/* <ul class="tasks"> with <li data-state="done|wip|todo"> */
+ul.tasks { list-style: none; padding-left: 0; }
+ul.tasks li {
+  padding-left: 1.9em;
+  position: relative;
+  margin: 0.4em 0;
+}
+ul.tasks li::before {
+  position: absolute;
+  left: 0;
+  font-family: ui-monospace, Menlo, monospace;
+  color: var(--fg-muted);
+  content: "[ ]";
+}
+ul.tasks li[data-state="done"]::before { content: "[x]"; color: var(--good); }
+ul.tasks li[data-state="wip"]::before  { content: "[~]"; color: var(--accent); }
+ul.tasks li[data-state="done"] { color: var(--fg-muted); }
+
+/* --- definition list (decisions, key/value facts) ------------- */
+
+dl { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: 0.4em 1.2em; }
+dt { font-weight: 600; }
+dd { margin: 0; }
+
+/* --- footnotes / source trail -------------------------------- */
+
+.footer {
+  margin-top: 4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  color: var(--fg-muted);
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 34rem) {
+  body { font-size: 16px; padding: 1.5rem 1rem 4rem; }
+  dl { grid-template-columns: 1fr; gap: 0.15em; }
+  dd { margin-bottom: 0.6em; }
+}
+
+@media print {
+  :root { --bg: #fff; --fg: #000; }
+  body { font-size: 11pt; }
+  a { color: #000; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<h1>ostat — project audit</h1>
+<p class="meta"><span>29 July 2026</span><span>vetr0s/ostat @ 6684378</span><span>whole-project audit</span></p>
+
+<p>ostat is in better shape than a two-day-old project has any right to be: the arena discipline is
+sound, the file-level comments are genuinely excellent, and the tests that exist are well-written.
+But it has one class of bug that will bite the first person who uses it, including you — the markdown
+preprocessing pass is line-oriented and has <strong>no concept of an inline code span</strong>. Writing
+a regex like <code>[^a-z]</code> inside backticks aborts the build with an error naming a
+&ldquo;note&rdquo; you never wrote. That is not hypothetical; I reproduced it against the built binary,
+along with seven other confirmed defects in the same family. Fix the code-span blindness first, because
+every other item on this list is a smaller problem than a generator that refuses to build ordinary
+technical prose.</p>
+
+<div class="warn">
+  <span class="note-label">Scope note</span>
+  <p>Every finding below marked <span class="tag tag-bad">reproduced</span> was executed against
+  <span class="path">build/debug/ostat</span> with a purpose-built fixture, not inferred from reading.
+  Findings marked <span class="tag tag-warn">by reading</span> were confirmed in the source but not run.
+  Two agent claims did not survive verification and have been dropped rather than softened: <code>~~~</code>
+  <em>mid-line</em> is harmless (the fence check requires line-start), and the note counter does
+  <em>not</em> desync between the HTML and feed passes.</p>
+</div>
+
+<h2>What is solid</h2>
+
+<p>Worth stating plainly, because it is real and should not be disturbed by the work below.</p>
+
+<p><strong>The two-arena model</strong> (<span class="path">main.odin:37-50, 146-171</span>) is the best
+structural decision in the project. <code>perm</code> for anything a <code>^Page</code> points at,
+<code>scratch</code> for per-build intermediates, one <code>arena_destroy</code> at the end. There is not
+a single manual <code>free</code> in 2,779 lines and that is a direct consequence.</p>
+
+<p><strong>No slice can go out of range in the preprocessing pass.</strong> I had an agent check every
+slice expression in the four preprocessing files against its guard, individually — <code>md_inline</code>'s
+<code>&lt;p&gt;</code> stripping, the table scanner's bounds, the note-definition parser, the delimiter-row
+parser, all four highlighter scanners. Every one is correctly guarded. Odin panics on a bad index, so this
+is the difference between a crash and none.</p>
+
+<p><strong>Multi-byte UTF-8 is safe in the highlighter</strong> despite byte indexing, because
+<code>is_digit</code>, <code>is_ident_start</code> and <code>is_hex_letter</code> all reject bytes
+&ge; 0x80, so no token ever starts or ends mid-codepoint. (The same cannot be said of
+<code>truncate_words</code> — see finding 5.)</p>
+
+<p><strong>Symlink loops are impossible.</strong> The directory iterator stats with
+<code>SYMLINK_NOFOLLOW</code>, so neither <code>walk_content</code> nor <code>copy_tree</code> can recurse
+into a cycle. No guard is needed and none should be added.</p>
+
+<p><strong>The <code>Note_Style</code> two-renderer design</strong> — one markdown source producing margin
+notes for HTML and numbered absolute-anchored endnotes for RSS — is a genuine idea, cleanly factored, and
+pinned by a regression test. <strong>The file-level doc comments</strong> across <span class="path">src/</span>
+are the strongest documentation in the repo; every one I spot-checked against the code was accurate.
+<strong>Builds are deterministic</strong> (both directory walks sort explicitly, with the reason written down)
+except for one clock read, which finding 21 turns into an asset.</p>
+
+<h2>Findings</h2>
+
+<h3>1. The preprocessing pass cannot see inline code <span class="tag tag-bad">reproduced</span></h3>
+
+<p>This is one root cause with four distinct symptoms, and it is the whole reason this audit is worth
+acting on. <code>apply_inline</code> (<span class="path">markdown.odin:173-181</span>) skips a line only
+when <code>line.fence</code> is set, and <code>split_source_lines</code> sets that flag only for
+<code>```</code> and <code>~~~</code> <em>block</em> fences. Backtick spans, four-space indented code
+blocks, raw HTML blocks and link destinations are all invisible to it.</p>
+
+<p><strong>1a. Ordinary prose aborts the build.</strong> <span class="path">notes.odin:147-152</span>.
+Any <code>[^…]</code> outside a block fence is treated as a note reference; an unmatched one fails the
+build. Reproduced:</p>
+
+<pre><code>$ cat content/blog/regex.md
+Match a non-letter with `[^a-z]+` in your pattern.
+
+$ ostat build site
+ostat: .../regex.md: note "a-z" is used but never defined
+exit=1</code></pre>
+
+<p>Regexes, POSIX character classes, BibTeX keys and array indexing all contain <code>[^</code>. The error
+names a concept the author never used, so the first encounter is pure confusion. <code>[^]</code> can
+<em>never</em> resolve, because empty labels are rejected at definition time.</p>
+
+<p><strong>1b. <code>~~</code> inside a code span corrupts the code.</strong>
+<span class="path">gfm.odin:27-53</span>. The preprocessor injects <code>&lt;del&gt;</code>, then cmark
+escapes it inside the span, so the reader sees the literal tags where they wrote tildes. Reproduced —
+source <code>Use `a ~~ b ~~ c` literally.</code> renders as:</p>
+
+<pre><code>&lt;p&gt;Use &lt;code&gt;a &amp;lt;del&amp;gt; b &amp;lt;/del&amp;gt; c&lt;/code&gt; literally here.&lt;/p&gt;</code></pre>
+
+<p><strong>1c. <code>~~~</code> at line start silently swallows the rest of the document.</strong>
+<span class="path">markdown.odin:165-168</span>. Fence tracking is a bool toggle that ignores fence
+length and fence character, so an unpaired <code>~~~</code> in prose turns everything after it into one
+code block. Exit 0, no warning. The same bug means a four-backtick block containing a three-backtick
+example — the standard way to document Markdown — terminates early.</p>
+
+<p><strong>1d. Indented fences and tables are de-nested out of lists.</strong>
+<span class="path">markdown.odin:116-119, 143-147</span>. <code>is_fence_marker</code> trims leading space,
+so a fence inside a list item is recognised, <code>open_html_block</code> then forces a blank line that
+terminates the list, and the body is emitted at column 0 still carrying its indent.</p>
+
+<div class="note">
+  <span class="note-label">Fix shape</span>
+  <p>All four need the same thing: the line scanner must track inline code spans and indented code blocks,
+  not just block fences. That means a real inline scan in <code>apply_inline</code> — walk the line, toggle
+  on unescaped backtick runs, and skip rewriting inside them — plus indentation tracking in
+  <code>split_source_lines</code>. Roughly a day, and it retires 1a through 1d together.</p>
+</div>
+
+<h3>2. Front-matter <code>slug</code> escapes the output directory <span class="tag tag-bad">reproduced</span></h3>
+
+<p><span class="path">content.odin:158-165</span> takes <code>fm.slug</code> verbatim;
+<span class="path">render.odin:212-219</span> concatenates it into a path and calls
+<code>make_directory_all</code>. Nothing rejects <code>/</code>, <code>..</code>, spaces or empty
+components. With <code>"slug": "../../escaped"</code> ostat <strong>created a directory two levels above
+the output tree</strong> before failing the write with a confusing <code>Not_Exist</code>. A typo scatters
+directories outside <span class="path">public/</span>; the content file is the least-trusted input in the
+system and it controls a write path.</p>
+
+<h3>3. Note labels reach HTML attributes unescaped <span class="tag tag-bad">reproduced</span></h3>
+
+<p><span class="path">notes.odin:193-203</span>. <code>validate_note_label</code> rejects only empty,
+whitespace and duplicate labels; <code>&quot;</code>, <code>&lt;</code> and <code>&amp;</code> go straight
+into <code>id=</code> and <code>for=</code>. This is the only user-controlled string in the pass that skips
+<code>html_escape</code>. A label containing a quote produces visible garbage markup and a stray
+<code>&lt;/label&gt;</code>, silently, exit 0. Author-controlled so not remote XSS, but it is a real
+escaping gap and the fix is one <code>html_escape</code> call plus a stricter validator.</p>
+
+<h3>4. A repeated note reference emits duplicate <code>id</code>s <span class="tag tag-bad">reproduced</span></h3>
+
+<p><span class="path">notes.odin:153-167</span> counts references but nothing uniques the emitted markup.
+Referencing one note twice produces two elements with <code>id="sn-dup"</code> (confirmed: count of 2).
+Both labels resolve to the first checkbox, so on narrow screens tapping the second marker opens the first
+note. In feed mode you get two <code>&lt;sup id="fnref-N"&gt;</code> with the same N.</p>
+
+<h3>5. <code>truncate_words</code> emits invalid UTF-8 <span class="tag tag-bad">reproduced</span></h3>
+
+<p><span class="path">text.odin:103-110</span>. The backward scan for a space is byte-wise and safe when it
+finds one; the fallback <code>cut = limit</code> slices at an arbitrary byte offset. Any description over
+160 bytes with no ASCII space — CJK, Thai, a long non-ASCII URL — is cut mid-codepoint. Confirmed with
+Japanese text: the <code>&lt;meta name="description"&gt;</code> contains a dangling <code>0xe3</code> and
+will not decode as UTF-8. Secondary: the 160 is a byte limit, so non-Latin descriptions are cut to about a
+third of the intended length.</p>
+
+<h3>6. Silent content loss in the page model <span class="tag tag-bad">reproduced</span> / <span class="tag tag-warn">by reading</span></h3>
+
+<div class="scroll">
+<table>
+<thead><tr><th>What</th><th>Where</th><th>Consequence</th></tr></thead>
+<tbody>
+<tr><td>Root <code>content/_index.md</code> is discarded</td><td><span class="path">content.odin:154-156</span> vs <span class="path">:73-81</span></td><td>The synthesised home page is appended last and overwrites it. Sitemap gets two identical <code>&lt;loc&gt;</code>. No warning. <strong>Reproduced.</strong></td></tr>
+<tr><td>Two pages resolving to one slug</td><td><span class="path">content.odin:167-176</span></td><td>Duplicate detection exists only for section pages. The later one wins; both still appear in listings, feed and sitemap pointing at one URL.</td></tr>
+<tr><td>Section directory with no <code>_index.md</code></td><td><span class="path">render.odin:95-98</span></td><td>Every breadcrumb links to a page that was never written. Every crumb 404s.</td></tr>
+<tr><td>Nested sections</td><td><span class="path">render.odin:204</span>, <span class="path">content.odin:174</span></td><td><code>blog/2024/post.md</code> has section <code>"blog/2024"</code>, matched by exact comparison, so it is invisible to the blog listing, the home page and the feed — but present in the sitemap.</td></tr>
+<tr><td><code>static/</code> copied last</td><td><span class="path">render.odin:21-28</span></td><td>A file at <code>static/index.html</code> silently overwrites the generated home page.</td></tr>
+<tr><td>Stale output never cleaned</td><td><span class="path">render.odin:21-28</span></td><td>Rename a slug and the old page is served forever. <code>./dev --build</code> compensates with <code>rm -rf</code>; plain <code>./dev</code> does not.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>7. <code>p.section</code> is retained but not cloned <span class="tag tag-warn">by reading</span></h3>
+
+<p><span class="path">content.odin:105, 139</span>. For nested sections, <code>sub</code> is a
+<code>fmt.tprintf</code> result on <code>context.temp_allocator</code>, and <code>p.section = section</code>
+stores it without cloning — while three lines later the same string <em>is</em> cloned for the map key. It
+is safe today only because nothing ever calls <code>free_all(context.temp_allocator)</code> and the scratch
+arena is never reset. The obvious future optimisation — resetting scratch per page — turns every nested
+page's breadcrumb into a use-after-free, and <strong>the test suite would stay green</strong>, because
+<span class="path">helpers_test.odin:6-12</span> points <code>perm</code>, <code>scratch</code> and
+<code>temp</code> at one allocator. This is the highest-value latent bug in the codebase.</p>
+
+<h3>8. Smaller correctness items <span class="tag tag-warn">by reading</span></h3>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Item</th><th>Where</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td><code>built N pages</code> is off by one</td><td><span class="path">main.odin:93</span></td><td><code>len(w.pages) + 1</code>, but home is already appended. <strong>Reproduced:</strong> 2 files written, 3 reported.</td></tr>
+<tr><td><code>ostat new</code> ignores the site dir</td><td><span class="path">archetype.odin:11-27</span></td><td>Writes <code>&lt;cwd&gt;/content/…</code>, invisible to <code>ostat build site</code>. <strong>Reproduced.</strong> Also unsanitised: <code>ostat new ../../x</code> escapes.</td></tr>
+<tr><td>JSON parse error discarded</td><td><span class="path">frontmatter.odin:69</span></td><td>A structured <code>Unmarshal_Error</code> with token and position becomes bare <code>Bad_Json</code>. The only place a rich error is downgraded.</td></tr>
+<tr><td><code>-future</code> uses UTC today</td><td><span class="path">main.odin:163</span></td><td>East of UTC, a post dated today is silently dropped for part of the day. Drafts skip silently too — no message either way.</td></tr>
+<tr><td><code>absolutize_urls</code> is double-quote only</td><td><span class="path">feed.odin:97-98</span></td><td>Misses single quotes, <code>srcset</code>, <code>poster</code>. Only reachable via raw HTML in a post, since cmark emits double quotes.</td></tr>
+<tr><td><code>strip_tags</code> entity scan is unbounded</td><td><span class="path">text.odin:64-71</span></td><td>A bare <code>&amp;</code> plus any later <code>;</code> swallows the span including tags, so markup leaks into the meta description.</td></tr>
+<tr><td><code>-o</code> consumes the next token blindly</td><td><span class="path">main.odin:105-118</span></td><td><code>ostat build -o -drafts</code> creates a directory named <code>-drafts</code>.</td></tr>
+<tr><td>Unescaped values in markup</td><td><span class="path">render.odin:94, 98, 121-137</span></td><td><code>p.section</code> and all config-supplied strings skip <code>html_escape</code>. Harmless while config is code; a hole the moment it is loaded from a file.</td></tr>
+<tr><td>Symlinked dir in <code>static/</code> aborts the build</td><td><span class="path">render.odin:257-272</span></td><td>Falls into the file branch, read fails, build dies <em>after</em> pages are written. In <code>content/</code> it is silently skipped instead.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Testing</h2>
+
+<p>51 tests, all passing in 1.3 ms, and the ones that exist are above-average: negative cases that assert
+mechanisms rather than output shape, regression tests that exist because something broke once, and a
+<code>why</code> comment on nearly every test. <span class="path">frontmatter.odin</span> and
+<span class="path">gfm.odin</span> are adequately covered and need nothing.</p>
+
+<p>The problem is what is <em>not</em> covered: <strong>roughly 735 lines, 36% of non-test source, have no
+direct coverage</strong>, and it is precisely the I/O-adjacent half.
+<span class="path">render.odin</span> (275 lines), <span class="path">main.odin</span> (171),
+<span class="path">sitemap.odin</span> (31) have none at all; <span class="path">content.odin</span> (196)
+has one incidental test. Two structural things block it, both cheap to remove: <strong>47 procedures carry
+<code>@(private = "file")</code></strong>, and <strong>build-and-write are fused</strong> —
+<code>render_page</code> ends at <code>write_output</code>, so no layout can be asserted without touching
+the filesystem. Splitting each into <code>build_x() -&gt; string</code> plus a write call is the single
+highest-leverage change available and unblocks about 480 lines.</p>
+
+<div class="warn">
+  <span class="note-label">A test that encodes the bug</span>
+  <p><span class="path">markdown_test.odin:53</span> asserts that an undefined <code>[^missing]</code>
+  fails the build. That is finding 1a written down as the specification, so fixing 1a requires changing
+  this test. Its neighbour at <span class="path">markdown_test.odin:71</span>,
+  <code>test_fenced_code_is_left_alone</code>, reads as &ldquo;code is protected&rdquo; but only exercises
+  <em>block</em> fences — giving false confidence about exactly the case that is broken.</p>
+</div>
+
+<p>Two further gaps worth naming. <strong>Draft and future filtering are dead code to every automated
+check</strong>: the demo site contains no draft and no future-dated page, so CI never enters those
+branches — and because <code>w.today</code> comes from <code>time.now()</code>, the demo build is
+clock-dependent, so a CI run before 2026-07-27 would have silently dropped a post while staying green.
+And <strong>there is no golden-output test</strong>, which is a shame, because this program is close to an
+ideal candidate: a pure function from content tree plus config to a deterministic file tree, with exactly
+one source of nondeterminism. Adding a <code>-today</code> override removes that, and makes future-date
+filtering testable for the first time.</p>
+
+<h2>Documentation drift</h2>
+
+<p>The source comments are in good shape; the drift is concentrated in the README, the colophon, and one
+load-bearing lie.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Claim</th><th>Where</th><th>Reality</th></tr></thead>
+<tbody>
+<tr><td>&ldquo;Nothing outside this file hardcodes a site's title, URL, or navigation&rdquo;</td><td><span class="path">config.odin:6-8</span></td><td><strong>False, and it is the claim the whole seam design rests on.</strong> About 70 site-specific values exist; 14 are in this file. Confirmed by reading. The README repeats it at <span class="path">README.md:127-130</span>.</td></tr>
+<tr><td><code>ostat new &lt;path&gt;</code> documented beside <code>build [site-dir]</code></td><td><span class="path">README.md:38</span></td><td>Following the README exactly produces a stray tree at repo root that the build never sees, reported as success. <strong>Reproduced.</strong></td></tr>
+<tr><td>&ldquo;<code>date</code> is required for anything in the feed&rdquo;</td><td><span class="path">README.md:88</span></td><td>Not enforced. An undated post enters the feed with an empty <code>&lt;pubDate&gt;&lt;/pubDate&gt;</code>, sorted last.</td></tr>
+<tr><td>Front matter is &ldquo;literal JSON&rdquo;</td><td><span class="path">README.md:72</span></td><td>It is JSON5 — comments, trailing commas and unquoted keys all parse. Under-promising, but the surface is wider than anyone knows.</td></tr>
+<tr><td>&ldquo;two identical feeds&rdquo;</td><td><span class="path">README.md:68</span></td><td>They differ in <code>&lt;link&gt;</code> and <code>atom:link</code>. <span class="path">feed.odin:10-12</span> says it correctly.</td></tr>
+<tr><td>Layout tree is the file map</td><td><span class="path">README.md:134-152</span></td><td>Omits <span class="path">archetype.odin</span> — the <code>new</code> command, the first place a reader looks after the bug above — and all six test files.</td></tr>
+<tr><td>&ldquo;no JavaScript beyond a theme toggle&rdquo;</td><td><span class="path">colophon.md:16</span></td><td>Three scripts ship: the anti-FOUC reader, <code>theme.js</code>, and an inline script rewriting every cross-origin link to <code>target="_blank"</code>. That last is behaviour worth disclosing.</td></tr>
+<tr><td><code>./dev --build</code> is &ldquo;the production build&rdquo;</td><td><span class="path">dev:6</span>, <span class="path">README.md:30</span></td><td>Runs <code>build.sh debug</code> and the debug binary. Content is production-shaped; the binary is not. <strong>Confirmed by reading <span class="path">dev:32,37</span>.</strong></td></tr>
+<tr><td>Requirements are Odin and libcmark</td><td><span class="path">README.md:11-14</span></td><td><code>python3</code> is a hard requirement of <code>./dev</code> (<span class="path">dev:49</span>) and of CI, documented nowhere and unguarded, unlike <code>gh</code>.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Tooling</h2>
+
+<p><strong>CI builds Odin from <code>master</code> on every run</strong>
+(<span class="path">ci.yml:20-23</span>). That is slow — a from-source build against LLVM — and it means a
+red build is as likely to be an upstream commit as yours, which is the worst property for a repo that just
+went public and may receive its first outside PR. It also never verifies the toolchain
+<span class="path">README.md:160</span> pins. Either pin a release or add an <code>odin version</code> step
+so failures are attributable.</p>
+
+<p><strong>The only platform-specific code in the repo is never exercised.</strong> CI is Ubuntu-only, and
+on Linux the cmark discovery loop takes the empty branch — so the bash-3.2 empty-array guard written
+specifically for macOS is untested by anything but your laptop. A macOS matrix entry would cover the half
+of the docs that is currently unverified. Relatedly, CI installs Ubuntu's cmark 0.30.x while the README
+claims verification against 0.31.2: the &ldquo;only four entry points, unchanged across that range&rdquo;
+assertion is the load-bearing one and nothing tests it.</p>
+
+<p>Minor: no <code>odinfmt</code> check despite a committed <span class="path">odinfmt.json</span> and
+<code>format_on_save</code> in the Zed settings, so the formatter contract binds Zed users only.
+<code>odin check</code> runs without <code>-vet -strict-style</code>. And
+<span class="path">build.sh:63</span>'s <code>exit "${PIPESTATUS[0]}"</code> is unreachable — <code>set -e</code>
+fires first — so it is dead code that looks load-bearing.</p>
+
+<h2>Organisation, and the identity refactor</h2>
+
+<p>The module split is mostly coherent. Two exceptions worth acting on while you are in there.
+<span class="path">text.odin</span> is two layers in one file: lines 25-151 are pure string utilities
+depending on nothing, lines 113-178 take <code>^Website</code> and are layout concerns —
+and <code>page_description</code> reaches <em>upward</em> for <code>DESCRIPTION_LIMIT</code>, declared in
+<span class="path">render.odin:19</span>, which makes the dependency direction unreadable. Separately,
+<code>^Website</code> is threaded through five procedures of the highlighter purely to reach
+<code>w.scratch</code>; it needs an allocator, not the god-struct, and the cost is visible in
+<span class="path">gfm_test.odin:8-13</span> where a test fabricates a <code>Website</code> with two fields
+set just to call one function.</p>
+
+<p>For the identity lift you asked for: <strong>about 70 site-specific values across four files, of which
+14 are already in <span class="path">config.odin</span></strong>. The remaining ~56 are the actual work, in
+two dense clusters. <span class="path">render.odin:85-192</span> holds not just data but <em>structure</em>
+— <code>write_home</code> fixes three sections in a fixed order with fixed ids and the literal headings
+&ldquo;Find Me&rdquo;, &ldquo;Elsewhere&rdquo;, &ldquo;Recent Posts&rdquo;. <span class="path">html/head.html</span>
+holds eight asset paths reachable only through a <code>#load</code>. Two stragglers are easy to miss:
+<code>site_brand</code> in <span class="path">text.odin:161-169</span> encodes the
+&ldquo;split the title at the first dot&rdquo; rule — vetr0s.dev-shaped logic that renders
+<code>Dr. Foo</code> as <code>Dr<span class="path">&lt;span class="accent"&gt;</span>. Foo</code> — and the
+root feed path <code>"/index.xml"</code> is hardcoded in three separate files.</p>
+
+<h2>Recommended order of work</h2>
+
+<p>Ordered so that each step makes the next safer, and so the demo-site replacement lands after the tests
+that would catch a regression in it.</p>
+
+<ul class="tasks">
+<li data-state="todo"><strong>Teach the preprocessor about inline code and indentation</strong> (finding 1). One fix, four symptoms, and it is the only item that makes ostat unusable for technical writing. Change <span class="path">markdown_test.odin:53</span>, which currently asserts the bug.</li>
+<li data-state="todo"><strong>Validate and escape the untrusted strings</strong> (findings 2, 3): reject <code>/</code>, <code>..</code>, whitespace and empties in <code>slug</code> and in note labels, and <code>html_escape</code> the label. Small, and it closes the two paths where content controls output structure.</li>
+<li data-state="todo"><strong>Split build-string from write-to-disk</strong> in <code>render_page</code>, <code>render_sitemap</code> and <code>write_feed</code>, and drop <code>@(private="file")</code> where it only blocks tests. Unblocks ~480 lines and is a precondition for the next two items.</li>
+<li data-state="todo"><strong>Add a <code>-today</code> override and a golden-output fixture site</strong> containing a draft, a future post, a slug override, a nested section, and a code span with <code>[^</code> and <code>~~</code> in it. Covers the untested 36% in one shot, and makes the build deterministic.</li>
+<li data-state="todo"><strong>Replace the demo site with the dogfooded docs.</strong> Do it now, on top of a golden test, so the swap is verified rather than hoped at. Retire the personal photos, the <code>resume.pdf</code> config entry and the <code>gh</code> fetch in <span class="path">dev</span>, and replace CI's hardcoded <code>kitchen-sink</code> assertion with a sitemap-to-disk invariant that survives content changes.</li>
+<li data-state="todo"><strong>Lift site identity</strong> into one place, including <code>write_home</code>'s structure, <span class="path">head.html</span>'s asset paths and <code>site_brand</code>. Correct the claim at <span class="path">config.odin:6-8</span> to what actually holds.</li>
+<li data-state="todo"><strong>Fix the latent allocator bug</strong> (finding 7) by cloning <code>p.section</code> into <code>perm</code>, and give <span class="path">helpers_test.odin</span> two real arenas so the class stays visible.</li>
+<li data-state="todo"><strong>Tooling pass:</strong> pin Odin in CI, add a macOS matrix entry, add an <code>odinfmt</code> check, document <code>python3</code>, and clear the README and colophon drift in the table above.</li>
+</ul>
+
+<p class="footer">Built from a read of all 21 <span class="path">src/*.odin</span> files, the stylesheet,
+<span class="path">README.md</span>, <span class="path">site/content/*.md</span>,
+<span class="path">build.sh</span>, <span class="path">dev</span> and
+<span class="path">.github/workflows/ci.yml</span>, across five parallel exploration passes. Every finding
+tagged <em>reproduced</em> was executed against <span class="path">build/debug/ostat</span> at commit
+6684378 using fixtures in a scratch directory; the repository was not modified. Two agent claims were
+dropped for failing verification.</p>
+
+</main>
+</body>
+</html>
