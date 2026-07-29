@@ -117,3 +117,44 @@ test_raw_html_survives :: proc(t: ^testing.T) {
 	testing.expect(t, strings.contains(html, "<figure>"), "figure survives cmark")
 	testing.expect(t, strings.contains(html, "<figcaption>Cap.</figcaption>"))
 }
+
+@(test)
+test_inline_code_spans_are_left_alone :: proc(t: ^testing.T) {
+	out, notes, ok := run("Match `[^a-z]+` and write `a ~~ b` in prose.\n")
+	testing.expect_value(t, ok, true)
+	testing.expect_value(t, len(notes), 0)
+	testing.expect(t, strings.contains(out, "`[^a-z]+`"), "marker untouched in a span")
+	testing.expect(t, strings.contains(out, "`a ~~ b`"), "tildes untouched in a span")
+	testing.expect(t, !strings.contains(out, "<del>"), "no strikethrough injected")
+}
+
+@(test)
+test_strikethrough_still_works_outside_a_span :: proc(t: ^testing.T) {
+	out, _, ok := run("A ~~struck~~ word beside `code`.\n")
+	testing.expect_value(t, ok, true)
+	testing.expect(t, strings.contains(out, "<del>struck</del>"), "prose still rewritten")
+	testing.expect(t, strings.contains(out, "`code`"), "the span reaches cmark intact")
+}
+
+@(test)
+test_double_backtick_span_holds_a_single_backtick :: proc(t: ^testing.T) {
+	// A run only closes on a run of its own length.
+	out, _, ok := run("Write ``a ` b ~~c~~`` here.\n")
+	testing.expect_value(t, ok, true)
+	testing.expect(t, !strings.contains(out, "<del>"), "the whole span is code")
+}
+
+@(test)
+test_a_code_span_may_cross_a_line :: proc(t: ^testing.T) {
+	out, _, ok := run("Start `a\n~~b~~ c` end.\n")
+	testing.expect_value(t, ok, true)
+	testing.expect(t, !strings.contains(out, "<del>"), "span continues onto the next line")
+}
+
+@(test)
+test_a_span_does_not_leak_past_a_paragraph :: proc(t: ^testing.T) {
+	// An unclosed backtick must not silence the rest of the document.
+	out, _, ok := run("An unclosed ` tick.\n\nA ~~struck~~ word after it.\n")
+	testing.expect_value(t, ok, true)
+	testing.expect(t, strings.contains(out, "<del>struck</del>"), "next paragraph is prose again")
+}

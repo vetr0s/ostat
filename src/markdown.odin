@@ -167,16 +167,81 @@ is_fence_marker :: proc(text: string) -> bool {
 	return strings.has_prefix(t, "```") || strings.has_prefix(t, "~~~")
 }
 
-// Rewrites that apply within a single line: margin note markers, then
-// strikethrough.
+/*
+Rewrites that apply within a line: margin note markers, then strikethrough.
+
+Inline code spans are stepped over. A span opens on a run of backticks and
+closes on a run of the same length, and it may continue onto a later line
+within the same paragraph, so the open run is carried across the walk and
+cleared at anything that ends a paragraph.
+
+Without this, `a ~~ b` in backticks had <del> spliced into it, cmark escaped
+the tags because they were inside a code span, and the reader saw the markup
+as literal text where they had written tildes.
+*/
 @(private = "file")
 apply_inline :: proc(w: ^Website, p: ^Page, lines: []Line, style: Note_Style) -> bool {
+	open_ticks := 0
 	for &line in lines {
-		if line.fence {
+		if line.fence || strings.trim_space(line.text) == "" {
+			open_ticks = 0
 			continue
 		}
-		line.text = replace_note_markers(w, p, line.text, style)
-		line.text = replace_strikethrough(line.text, w.scratch)
+		line.text = rewrite_outside_code(w, p, line.text, style, &open_ticks)
 	}
 	return check_notes_used(p)
+}
+
+@(private = "file")
+rewrite_outside_code :: proc(
+	w: ^Website,
+	p: ^Page,
+	text: string,
+	style: Note_Style,
+	open_ticks: ^int,
+) -> string {
+	if open_ticks^ == 0 && !strings.contains(text, "`") {
+		return rewrite_prose(w, p, text, style)
+	}
+
+	b := strings.builder_make(w.scratch)
+	seg := 0
+
+	i := 0
+	for i < len(text) {
+		if text[i] != '`' {
+			i += 1
+			continue
+		}
+
+		run := 1
+		for i + run < len(text) && text[i + run] == '`' {
+			run += 1
+		}
+
+		switch {
+		case open_ticks^ == 0:
+			// Prose up to here; the span opens and its fence goes out as-is.
+			strings.write_string(&b, rewrite_prose(w, p, text[seg:i], style))
+			strings.write_string(&b, text[i:i + run])
+			open_ticks^ = run
+			seg = i + run
+		case run == open_ticks^:
+			// Everything since the opening fence was code. Verbatim.
+			strings.write_string(&b, text[seg:i + run])
+			open_ticks^ = 0
+			seg = i + run
+		}
+		// A run of the wrong length inside a span is just more code.
+		i += run
+	}
+
+	tail := text[seg:]
+	strings.write_string(&b, open_ticks^ == 0 ? rewrite_prose(w, p, tail, style) : tail)
+	return strings.to_string(b)
+}
+
+@(private = "file")
+rewrite_prose :: proc(w: ^Website, p: ^Page, text: string, style: Note_Style) -> string {
+	return replace_strikethrough(replace_note_markers(w, p, text, style), w.scratch)
 }
