@@ -76,22 +76,24 @@
        In ch, so it is a count of characters and holds its reading width
        whatever the face. The px it costs does change: a char of ET Book at
        this size is 9.78px, against 10.86px for the system sans it replaced,
-       so the same 72 characters now ask for a window about 80px narrower.
+       so the same characters now ask for a window about 80px narrower.
 
-           72ch prose -> notes float at about 1000px
-           80ch       -> 1080px
-           88ch       -> 1160px
-
-       Widen it if you browse maximised, and move the media query at the foot
-       of the margin-note section by the same amount. */
-    --measure: 72ch;
+       Changing this also means changing the fold breakpoint at the foot of
+       the margin-note section, which is derived from it. That comment owns
+       the arithmetic and the conversion table; do not restate them here. */
+    --measure: 80ch;
 
     /* In rem, not ch. A note is set at 0.78em, and ch resolves against the
        font of the element it is used on, so a width in ch would come out a
        fifth narrower than the space reserved for it here and the arithmetic
-       below would quietly over-reserve. A note is apparatus, not a second
-       column: 13rem holds a sentence or two without taking the page over. */
-    --sidenote-width: 13rem;
+       below would quietly over-reserve.
+
+       A note is apparatus, not a second column. Past about 16rem it stops
+       reading as a gloss on the prose and starts competing with it.
+
+       This is the second input to the fold breakpoint, along with --measure.
+       Changing it means recomputing that breakpoint too. */
+    --sidenote-width: 15rem;
     --sidenote-gap: 1.5rem;
 
     /* Prose plus gutter. main is sized from this, and the container query
@@ -154,7 +156,7 @@ code {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 3px;
-    padding: 0.1em 0.3em;
+    padding: 0.05em 0.2em;
 }
 
 pre {
@@ -310,7 +312,6 @@ footer p { max-width: var(--measure); margin: 0; }
     align-items: baseline;
     justify-content: space-between;
     gap: var(--space-sm);
-    font-size: 0.875rem;
     color: var(--color-muted);
 }
 
@@ -386,20 +387,38 @@ input.margin-toggle { display: none; }
 /* No gutter to float into. The marker becomes the toggle and the note folds
    into the prose under it.
 
-   KEEP THIS IN STEP WITH THE THREE LENGTHS ABOVE. A query cannot read a
-   custom property, so the number is written out, and ch is not available to
-   a media query either. The layout needs
-       measure + gap + note + 2 x pad
-   A char of ET Book at this body size measures 9.78px, so 72ch is 704px;
-   plus 24px of gap, 208px of note, and 64px of padding, that is 1000px. The
-   threshold is rounded up to 64em, or 1024px, so the last few pixels of the
-   gutter are never squeezed.
+   THIS NUMBER IS DERIVED FROM --measure AND --sidenote-width AND MUST BE
+   RECOMPUTED WITH EITHER. It is written out by hand because a media query
+   can read neither a custom property nor ch, so the derivation cannot live
+   in the stylesheet as code. This comment is the only place it is recorded.
+   The layout needs
 
-   Measured in the browser rather than assumed, and remeasured when the face
-   changed, because ch is a property of the font. Change --measure, the body
-   size, or the family, and this number goes stale; notes then either fold
-   when there was room or float when there was not. */
-@media (max-width: 64em) {
+       measure + gap + note + 2 x pad, rounded up to the next em
+
+   A char of ET Book at this body size measures 9.78px, so 80ch is 782px;
+   plus 24px of gap, 240px of note, and 64px of padding, that is 1110px, or
+   69.4em. Rounded up to 70em so the last few pixels of the gutter are never
+   squeezed.
+
+   Both inputs move this number, so the tables below hold one fixed while
+   varying the other. At the current 15rem note:
+
+       72ch -> 1032px -> 65em
+       80ch -> 1110px -> 70em   (current)
+       88ch -> 1189px -> 75em
+
+   At the current 80ch measure:
+
+       13rem -> 1078px -> 68em
+       15rem -> 1110px -> 70em  (current)
+       16rem -> 1126px -> 71em
+
+   The px figure for the measure is taken from the per-character width above
+   rather than assumed, because ch is a property of the font. Change
+   --measure, --sidenote-width, the body size, or the family without
+   changing this and notes fold when there was room, or float when there
+   was not. */
+@media (max-width: 70em) {
     .sidenote {
         display: none;
         float: none;
