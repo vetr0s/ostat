@@ -89,13 +89,15 @@ write_header :: proc(w: ^Website, b: ^strings.Builder, p: ^Page) {
 	case p.is_home:
 		fmt.sbprintfln(b, `    <span class="here" aria-current="page">%s</span>`, brand)
 	case p.is_section:
+		section := html_escape(p.section, w.scratch)
 		fmt.sbprintfln(b, `    <a href="/">%s</a>`, brand)
 		strings.write_string(b, "    <span class=\"sep\">/</span>\n")
-		fmt.sbprintfln(b, `    <span class="here" aria-current="page">%s</span>`, p.section)
+		fmt.sbprintfln(b, `    <span class="here" aria-current="page">%s</span>`, section)
 	case p.section != "":
+		section := html_escape(p.section, w.scratch)
 		fmt.sbprintfln(b, `    <a href="/">%s</a>`, brand)
 		strings.write_string(b, "    <span class=\"sep\">/</span>\n")
-		fmt.sbprintfln(b, `    <a href="/%s/">%s</a>`, p.section, p.section)
+		fmt.sbprintfln(b, `    <a href="/%s/">%s</a>`, section, section)
 	case:
 		// A page at the content root, like the colophon: no section to climb.
 		fmt.sbprintfln(b, `    <a href="/">%s</a>`, brand)
@@ -121,7 +123,7 @@ write_home :: proc(w: ^Website, b: ^strings.Builder) {
 		fmt.sbprintfln(
 			b,
 			`  <div class="portrait">`+"\n"+`    <img src="%s" alt="%s" width="%d" height="%d" />`+"\n"+`  </div>`,
-			p.src,
+			html_escape(p.src, w.scratch),
 			html_escape(p.alt, w.scratch),
 			p.width,
 			p.height,
@@ -129,14 +131,24 @@ write_home :: proc(w: ^Website, b: ^strings.Builder) {
 	}
 	strings.write_string(b, "  <dl class=\"contact-list\">\n")
 	for c in w.config.contact {
-		fmt.sbprintfln(b, "    <dt>%s</dt>", c.label)
-		fmt.sbprintfln(b, `    <dd><a href="%s">%s</a></dd>`, c.url, html_escape(c.text, w.scratch))
+		fmt.sbprintfln(b, "    <dt>%s</dt>", html_escape(c.label, w.scratch))
+		fmt.sbprintfln(
+			b,
+			`    <dd><a href="%s">%s</a></dd>`,
+			html_escape(c.url, w.scratch),
+			html_escape(c.text, w.scratch),
+		)
 	}
 	strings.write_string(b, "  </dl>\n</section>\n\n")
 
 	fmt.sbprintfln(b, `<section id="elsewhere">`+"\n"+`  <h1>%s</h1>`+"\n"+`  <ul>`, html_escape(w.config.home.elsewhere_heading, w.scratch))
 	for link in w.config.elsewhere {
-		fmt.sbprintfln(b, `    <li><a href="%s">%s</a></li>`, link.url, link.label)
+		fmt.sbprintfln(
+			b,
+			`    <li><a href="%s">%s</a></li>`,
+			html_escape(link.url, w.scratch),
+			html_escape(link.label, w.scratch),
+		)
 	}
 	strings.write_string(b, "  </ul>\n</section>\n\n")
 

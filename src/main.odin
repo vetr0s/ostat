@@ -86,6 +86,13 @@ cmd_build :: proc(args: []string) -> bool {
 	defer website_destroy(&w)
 
 	parse_build_args(&w, args) or_return
+	load_site_config(&w) or_return
+
+	// After the file, not before: -base-url is an override of whatever the site
+	// says, and loading site.json on top of it would put the file back in front.
+	if w.opts.base_url != "" {
+		w.config.base_url = w.opts.base_url
+	}
 
 	collect_content(&w) or_return
 	render_content(&w) or_return
@@ -150,9 +157,6 @@ parse_build_args :: proc(w: ^Website, args: []string) -> bool {
 
 	if w.opts.site_dir == "" {
 		w.opts.site_dir = "."
-	}
-	if w.opts.base_url != "" {
-		w.config.base_url = w.opts.base_url
 	}
 	return true
 }

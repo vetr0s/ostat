@@ -1,11 +1,19 @@
 package main
 
+import "core:encoding/json"
+import "core:fmt"
+import "core:os"
+
 /*
 One site's identity, in one struct.
 
 What lives here: everything about *which* site is being built — its name,
 address, author, the home page's copy and links, the section that holds posts.
 Change these and you get a different site.
+
+The struct is filled from DEFAULT_SITE and then from <site-dir>/site.json, so
+one binary builds any number of sites. The defaults below are ostat's own
+documentation site, and they are what a site with no site.json gets.
 
 What does not, and where to find it instead:
 
@@ -77,8 +85,8 @@ Site_Config :: struct {
 // A variable, not a constant. A compile-time constant holding slice fields
 // gives those slices no backing storage to point at.
 // ostat's own documentation, which is the site in site/ and the thing this
-// generator builds to prove it works. Replace the whole literal to build a
-// different site; portrait may be left zeroed if there is no author photo.
+// generator builds to prove it works. A site.json overrides any of it;
+// portrait may be left zeroed if there is no author photo.
 //
 // URLs here are root-relative, so a site is assumed to sit at a domain root
 // rather than under a path.
@@ -108,6 +116,57 @@ DEFAULT_SITE := Site_Config {
 		recent_heading    = "Release Notes",
 		nothing_published = "No releases yet.",
 	},
+}
+
+CONFIG_FILE :: "site.json"
+
+/*
+Reads <site-dir>/site.json over the defaults above.
+
+A key the file omits keeps its default, because unmarshalling assigns only
+what the document actually contains. A site.json naming nothing but base_url
+and title is therefore enough, and does not have to restate the struct.
+
+Having no site.json is not an error. The defaults describe a working site, and
+a content directory on its own should still build.
+
+Everything this returns is untrusted in a way a compile-time literal was not,
+so config strings are escaped where they reach markup rather than here. The
+one exception is base_url, which is checked below because it is concatenated
+into every absolute URL the build emits.
+*/
+load_site_config :: proc(w: ^Website) -> bool {
+	path := fmt.aprintf("%s/%s", w.opts.site_dir, CONFIG_FILE, allocator = w.scratch)
+	if !os.exists(path) {
+		return true
+	}
+
+	src, read_err := os.read_entire_file_from_path(path, w.scratch)
+	if read_err != nil {
+		fmt.eprintfln("ostat: cannot read %s: %v", path, read_err)
+		return false
+	}
+
+	// Into w.config, which already holds the defaults, so this is a merge.
+	if err := json.unmarshal(src, &w.config, .JSON5, w.perm); err != nil {
+		fmt.eprintfln("ostat: %s: %v", path, err)
+		return false
+	}
+
+	required := [?]struct {
+		value, name: string,
+	} {
+		{w.config.base_url, "base_url"},
+		{w.config.title, "title"},
+		{w.config.locale, "locale"},
+	}
+	for f in required {
+		if f.value == "" {
+			fmt.eprintfln("ostat: %s: %q cannot be empty", path, f.name)
+			return false
+		}
+	}
+	return true
 }
 
 // The number of recent posts the home page lists.
