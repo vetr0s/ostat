@@ -20,7 +20,10 @@ Regenerate after an intended change, and read the diff before committing it:
 
     ./build.sh && rm -rf tests/golden && \
       ./build/debug/ostat build tests/fixture-site -o tests/golden \
-        -today 2026-01-01 -base-url https://example.test/
+        -today 2026-01-01
+
+The base URL is not passed: it comes from tests/fixture-site/site.json, so
+the command and the test read identity from the same place.
 
 A golden test catches regressions, not gaps: it only knows about shapes the
 fixture actually contains. Adding a case to the fixture is how it learns one.
@@ -29,7 +32,6 @@ fixture actually contains. Adding a case to the fixture is how it learns one.
 FIXTURE_SITE :: "tests/fixture-site"
 GOLDEN_DIR :: "tests/golden"
 FIXTURE_TODAY :: "2026-01-01"
-FIXTURE_BASE_URL :: "https://example.test/"
 
 @(private = "file")
 build_fixture :: proc(drafts := false, future := false) -> ^Website {
@@ -37,8 +39,15 @@ build_fixture :: proc(drafts := false, future := false) -> ^Website {
 	w.opts.site_dir = FIXTURE_SITE
 	w.opts.drafts = drafts
 	w.opts.future = future
-	w.config.base_url = FIXTURE_BASE_URL
 	w.today = FIXTURE_TODAY
+	// The fixture's identity comes from its own site.json, exactly as the
+	// regeneration command below reads it. Setting the config here instead
+	// would leave the golden output passing while config loading was broken.
+	if !load_site_config(w) {
+		// Loudly, and here. Falling back to the defaults would fail every
+		// golden comparison at once and say nothing about why.
+		panic("tests/fixture-site/site.json failed to load")
+	}
 	return w
 }
 

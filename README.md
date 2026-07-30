@@ -5,8 +5,9 @@ after the generator behind
 [gingerBill.org](https://github.com/gingerBill/gingerBill.org).
 
 There is no template language. Every layout is a procedure that writes HTML.
-There is no config file, no theme system, and no plugin API. It builds one
-site's shape, and that shape lives in `src/render.odin`.
+There is no theme system and no plugin API. A site's identity is a `site.json`
+beside its content, but its shape is not configurable: that lives in
+`src/render.odin` and changing it means editing a procedure.
 
 The site in `site/` is ostat's own documentation, and building it is how the
 generator proves it works.
@@ -144,9 +145,11 @@ distinguishes.
 
 ## Configuring it
 
-`src/config.odin` holds `Site_Config`: title, base URL, author, the brand
-split, and the home page's links and headings. Replacing the `DEFAULT_SITE`
-literal gives a different site.
+`site.json`, beside `content/`, holds a site's identity: title, base URL,
+author, the brand split, and the home page's links and headings. Every key is
+optional and what the file omits keeps its default, so one binary builds any
+number of sites. A site with no `site.json` still builds and says in its title
+that it is unconfigured.
 
 Three things stay in the source deliberately: the shape of the layouts, in
 `render.odin`; the assets each page links, in `src/html/head.html`; and the CSS
@@ -160,7 +163,7 @@ build.sh              build, test, and the cmark linker flag
 dev                   build the documentation site and serve it
 src/
   main.odin           CLI, arenas, the Website struct
-  config.odin         Site_Config
+  config.odin         Site_Config, and reading site.json
   content.odin        discovery and the page model
   frontmatter.odin    the --- fenced JSON block
   archetype.odin      ostat new
@@ -175,6 +178,7 @@ src/
   html/               static chunks, pulled in with #load
   *_test.odin         unit tests, beside what they test
 site/                 ostat's documentation, and the demo site
+  site.json           its identity, like any other site's
 tests/
   fixture-site/       a site exercising every path
   golden/             its expected output, committed

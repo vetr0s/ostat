@@ -1,36 +1,49 @@
 ---
 {
     "title": "Configuring",
-    "description": "What lives in config.odin, and what deliberately does not."
+    "description": "What lives in site.json, and what deliberately does not."
 }
 ---
 
-ostat is a site-specific generator, not a themeable one. There is no config
-file and no template language: a site's identity is one struct, and its layouts
-are procedures.
+ostat has no template language: a site's layouts are procedures. It does have a
+config file, and that is the whole of a site's identity. One binary builds any
+number of sites.
 
 ## What is configuration
 
-`src/config.odin` holds `Site_Config`. Replacing the `DEFAULT_SITE` literal
-gives you a different site:
+`site.json`, beside `content/`:
 
-```odin
-DEFAULT_SITE := Site_Config {
-	base_url    = "https://example.com/",
-	title       = "Example",
-	description = "…",
-	author      = "A Name",
-	locale      = "en-us",
-	brand       = {head = "exam", accent = "ple"},
-	contact     = {{"email", "a@example.com", "mailto:a@example.com"}},
-	elsewhere   = {{"about", "/about/"}},
-	home        = {contact_heading = "Find Me", …},
+```json
+{
+    "base_url": "https://example.com/",
+    "title": "Example",
+    "description": "…",
+    "author": "A Name",
+    "locale": "en-us",
+    "brand": { "head": "exam", "accent": "ple" },
+    "contact": [
+        { "label": "email", "text": "a@example.com", "url": "mailto:a@example.com" }
+    ],
+    "elsewhere": [ { "label": "about", "url": "/about/" } ],
+    "home": { "contact_heading": "Find Me" }
 }
 ```
 
+Every key is optional. What the file omits keeps its default, at every level,
+so a `site.json` naming nothing but `base_url` and `title` is a complete one.
+A site with no `site.json` at all still builds, and says in its title that it
+is unconfigured.
+
+The defaults live in `DEFAULT_SITE` in `src/config.odin` and describe nobody's
+site. They used to be ostat's own, which meant a forgotten key silently
+inherited ostat's headings and documentation links.
+
 `brand` is the site name split where the accent colour starts, written out
-rather than derived[^brand]. `portrait` may be left zeroed if there is no
-author photo; the home page then omits the image entirely.
+rather than derived[^brand]. `portrait` may be left out entirely if there is no
+author photo; the home page then omits the image.
+
+`-base-url` overrides whatever the file says, which is how a staging build gets
+a different address without editing the site.
 
 [^brand]: It used to be derived, by splitting the title at its first dot. That
     is a rule about one particular domain, and it renders a title like

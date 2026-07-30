@@ -12,8 +12,9 @@ address, author, the home page's copy and links, the section that holds posts.
 Change these and you get a different site.
 
 The struct is filled from DEFAULT_SITE and then from <site-dir>/site.json, so
-one binary builds any number of sites. The defaults below are ostat's own
-documentation site, and they are what a site with no site.json gets.
+one binary builds any number of sites. The defaults below name no real site:
+they are a placeholder that builds and says plainly that it is unconfigured.
+ostat's own identity lives in site/site.json like anyone else's.
 
 What does not, and where to find it instead:
 
@@ -84,37 +85,30 @@ Site_Config :: struct {
 
 // A variable, not a constant. A compile-time constant holding slice fields
 // gives those slices no backing storage to point at.
-// ostat's own documentation, which is the site in site/ and the thing this
-// generator builds to prove it works. A site.json overrides any of it;
-// portrait may be left zeroed if there is no author photo.
+//
+// Deliberately nobody's site. These used to be ostat's own identity, which
+// meant a site.json that forgot a key silently inherited ostat's headings and
+// documentation links, and the forker who hit that had no way to see where the
+// strings came from. A placeholder is wrong in a way you notice.
+//
+// base_url points at the dev server because an unconfigured site is one being
+// looked at locally. Every other address a build emits is derived from it.
 //
 // URLs here are root-relative, so a site is assumed to sit at a domain root
 // rather than under a path.
 @(rodata)
 DEFAULT_SITE := Site_Config {
-	base_url    = "https://ostat.example/",
-	title       = "ostat",
-	description = "A static site generator written in Odin. Layouts are procedures, not templates.",
-	author      = "ostat",
+	base_url    = "http://localhost:1313/",
+	title       = "An unconfigured ostat site",
+	description = "This site has no site.json. Add one beside content/ to give it a name.",
+	author      = "",
 	locale      = "en-us",
-	brand       = {head = "ostat", accent = ""},
-	contact     = {
-		{"source",  "github.com/vetr0s/ostat",         "https://github.com/vetr0s/ostat"},
-		{"issues",  "github.com/vetr0s/ostat/issues",  "https://github.com/vetr0s/ostat/issues"},
-		{"licence", "Unlicense",                       "https://unlicense.org/"},
-	},
-	elsewhere   = {
-		{"install",     "/install/"},
-		{"writing",     "/writing/"},
-		{"configuring", "/configuring/"},
-		{"internals",   "/internals/"},
-		{"notes",       "/blog/"},
-	},
+	brand       = {head = "unconfigured", accent = ""},
 	home        = {
-		contact_heading   = "ostat",
-		elsewhere_heading = "Documentation",
-		recent_heading    = "Release Notes",
-		nothing_published = "No releases yet.",
+		contact_heading   = "Contact",
+		elsewhere_heading = "Elsewhere",
+		recent_heading    = "Recent",
+		nothing_published = "Nothing published yet.",
 	},
 }
 

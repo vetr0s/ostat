@@ -12,14 +12,15 @@ restate the entire struct to avoid losing headings it never mentioned.
 
 CONFIG_FIXTURE :: "tests/fixture-config"
 CONFIG_FIXTURE_EMPTY_TITLE :: "tests/fixture-config-empty-title"
+CONFIG_FIXTURE_NONE :: "tests/fixture-config-none"
 
 @(test)
 test_site_config_absent_leaves_defaults :: proc(t: ^testing.T) {
 	w := test_website()
 	defer test_website_destroy(w)
 
-	// The golden fixture deliberately carries no site.json.
-	w.opts.site_dir = FIXTURE_SITE
+	// A real site directory that carries content and no site.json.
+	w.opts.site_dir = CONFIG_FIXTURE_NONE
 
 	testing.expect(t, load_site_config(w), "a site without site.json should build")
 	testing.expect_value(t, w.config.title, DEFAULT_SITE.title)

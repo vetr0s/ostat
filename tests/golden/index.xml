@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>ostat</title>
+    <title>Fixture Site</title>
     <link>https://example.test/</link>
-    <description>A static site generator written in Odin. Layouts are procedures, not templates.</description>
+    <description>The site the golden tests build. Every shape the generator knows how to render, and nothing else.</description>
     <generator>ostat</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 02 Jun 2025 00:00:00 +0000</lastBuildDate>
