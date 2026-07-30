@@ -240,7 +240,9 @@ write_output :: proc(w: ^Website, rel, body: string) -> bool {
 
 // make_directory_all reports .Exist rather than succeeding when the path is
 // already there, and a rebuild into an existing public/ hits that constantly.
-@(private = "file")
+//
+// Not file-private: `ostat new` needs the same thing, and writing the check a
+// second time is how it came to be missing there.
 ensure_directory :: proc(path: string) -> bool {
 	err := os.make_directory_all(path)
 	if err == nil || err == .Exist {

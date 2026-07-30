@@ -29,27 +29,12 @@ cmd_new :: proc(args: []string) -> bool {
 		fmt.eprintfln("ostat: %s already exists", path)
 		return false
 	}
-	if err := os.make_directory_all(filepath.dir(path)); err != nil {
-		fmt.eprintfln("ostat: cannot create directory for %s: %v", path, err)
-		return false
-	}
+	// Not make_directory_all directly: it reports .Exist rather than success,
+	// so every post after the first in a section failed to be created.
+	ensure_directory(filepath.dir(path)) or_return
 
 	y, m, d := time.date(time.now())
-	body := fmt.tprintf(
-		`---
-{
-    "title": %q,
-    "date": "%04d-%02d-%02d",
-    "draft": true
-}
----
-
-`,
-		title_from_slug(filepath.base(rel)),
-		y,
-		int(m),
-		d,
-	)
+	body := archetype_body(title_from_slug(filepath.base(rel)), y, int(m), d)
 
 	if err := os.write_entire_file(path, body); err != nil {
 		fmt.eprintfln("ostat: cannot write %s: %v", path, err)
@@ -101,6 +86,33 @@ parse_new_args :: proc(args: []string) -> (rel, site_dir: string, ok: bool) {
 		}
 	}
 	return rel, site_dir, true
+}
+
+// The file `ostat new` writes. Separate from the command so that a test can
+// parse it back: what this produces has to be readable by parse_front_matter,
+// and once was not.
+//
+// The braces are doubled because fmt reads a lone `{` as the start of a
+// formatting directive. Written singly, every file this produced opened with
+// `%!(MISSING CLOSE BRACE)` where the `{` belonged, and no page it created
+// could be built.
+archetype_body :: proc(title: string, y, m, d: int, allocator := context.temp_allocator) -> string {
+	return fmt.aprintf(
+		`---
+{{
+    "title": %q,
+    "date": "%04d-%02d-%02d",
+    "draft": true
+}}
+---
+
+`,
+		title,
+		y,
+		m,
+		d,
+		allocator = allocator,
+	)
 }
 
 // "a-new-post" -> "A New Post"
