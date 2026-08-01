@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>An Undated Note · Fixture Site</title>
+<meta name="description" content="A page in a section that is not the blog, so it has no date.">
+<meta name="author" content="Fixture Author">
+<meta property="og:type" content="article">
+<meta property="og:title" content="An Undated Note · Fixture Site">
+<meta property="og:description" content="A page in a section that is not the blog, so it has no date.">
+<meta property="og:url" content="https://example.test/notes/undated/">
+<script>
+  (function () {
+    var t = localStorage.getItem('theme');
+    if (t === 'light' || t === 'dark') {
+      document.documentElement.setAttribute('data-theme', t);
+    }
+  })();
+</script>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<!-- The roman cut starts downloading here, during HTML parse, rather than
+     after the stylesheet is parsed and a glyph is first wanted. font-display
+     is optional, so being ready by first paint is the difference between the
+     page being set in ET Book and being set in Palatino. crossorigin is
+     required on a font preload even same-origin, or the fetch is made twice. -->
+<link rel="preload" href="/font/et-book-roman-line-figures.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/reset.css">
+<link rel="stylesheet" href="/css/style.css">
+<script src="/js/theme.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('a[href]').forEach(function (a) {
+      if (a.hostname && a.hostname !== location.hostname) {
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+      }
+    });
+  });
+</script>
+</head>
+<body>
+  <header>
+<nav class="crumbs" aria-label="Breadcrumb">
+  <p class="trail">
+    <a href="/">fixture<span class="accent">.site</span></a>
+    <span class="sep">/</span>
+    <a href="/notes/">notes</a>
+  </p>
+  <button id="theme-toggle" type="button" aria-label="Toggle color theme"></button>
+</nav>
+  </header>
+  <main>
+<article>
+  <h1>An Undated Note</h1>
+<p>Only the blog is dated. This page is here so the golden tree covers a section
+listing that has no time to show.</p>
+</article>
+  </main>
+</body>
+</html>

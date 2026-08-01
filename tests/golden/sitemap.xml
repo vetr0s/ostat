@@ -15,6 +15,12 @@
     <lastmod>2025-06-02</lastmod>
   </url>
   <url>
+    <loc>https://example.test/notes/</loc>
+  </url>
+  <url>
+    <loc>https://example.test/notes/undated/</loc>
+  </url>
+  <url>
     <loc>https://example.test/custom-slug/</loc>
   </url>
   <url>

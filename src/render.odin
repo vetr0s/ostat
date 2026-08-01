@@ -193,7 +193,11 @@ write_post_entries :: proc(w: ^Website, b: ^strings.Builder, pages: []^Page, emp
 	for p in pages {
 		strings.write_string(b, "  <article class=\"post-entry\">\n")
 		fmt.sbprintfln(b, `    <a href="%s">%s</a>`, p.url, html_escape(p.title, w.scratch))
-		fmt.sbprintfln(b, `    <time datetime="%s">%s</time>`, p.date, p.date)
+		// Only the blog is dated. An undated page in any other section used to
+		// get <time datetime=""></time>, which is not a time and not valid.
+		if p.date != "" {
+			fmt.sbprintfln(b, `    <time datetime="%s">%s</time>`, p.date, p.date)
+		}
 		strings.write_string(b, "  </article>\n")
 	}
 }
