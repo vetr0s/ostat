@@ -110,6 +110,13 @@ walk_content :: proc(w: ^Website, dir: string, section: string) -> bool {
 				fmt.eprintfln("ostat: %s: sections do not nest", entry.fullpath)
 				return false
 			}
+			// A directory name becomes a URL path segment and an output
+			// directory, which is exactly what a slug becomes and exactly why
+			// a slug is checked. It also reaches an href in every breadcrumb.
+			if !valid_slug(entry.name) {
+				fmt.eprintfln("ostat: %s: %q is not a usable section name", entry.fullpath, entry.name)
+				return false
+			}
 			walk_content(w, entry.fullpath, entry.name) or_return
 
 			// Checked after the walk, because the _index.md that answers it is

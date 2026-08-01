@@ -42,6 +42,14 @@ test_a_section_needs_an_index :: proc(t: ^testing.T) {
 }
 
 @(test)
+test_a_section_name_has_to_survive_being_a_path :: proc(t: ^testing.T) {
+	// A directory name becomes a URL path segment, an output directory, and an
+	// href in every breadcrumb inside it. A slug is checked for exactly that,
+	// and a directory name had never been checked at all.
+	testing.expect(t, !discover("tests/fixture-bad-section"), "a section name with a space is rejected")
+}
+
+@(test)
 test_the_home_page_is_not_authored_in_content :: proc(t: ^testing.T) {
 	// It was loaded, written, and then overwritten by the synthesised home
 	// page, which is appended after the walk. Both carried url "/", so the

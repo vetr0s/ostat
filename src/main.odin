@@ -95,6 +95,10 @@ cmd_build :: proc(args: []string) -> bool {
 	// After the file, not before: -base-url is an override of whatever the site
 	// says, and loading site.json on top of it would put the file back in front.
 	if w.opts.base_url != "" {
+		if c, ok := check_base_url(w.opts.base_url); !ok {
+			fmt.eprintfln("ostat: -base-url cannot contain %q", c)
+			return false
+		}
 		w.config.base_url = w.opts.base_url
 	}
 

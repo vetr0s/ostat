@@ -56,3 +56,24 @@ test_site_config_rejects_an_empty_required_field :: proc(t: ^testing.T) {
 	// <title> of every page.
 	testing.expect(t, !load_site_config(w), "an empty title should fail the build")
 }
+
+// Neither is escaped where it lands, because neither is text: base_url is
+// concatenated into og:url, <loc>, <link> and <atom:link>, and locale into the
+// html lang attribute and <language>. So both are checked once, here.
+@(test)
+test_site_config_rejects_an_unusable_base_url :: proc(t: ^testing.T) {
+	w := test_website()
+	defer test_website_destroy(w)
+	w.opts.site_dir = "tests/fixture-config-bad-base-url"
+
+	testing.expect(t, !load_site_config(w), "a base_url that closes an attribute is rejected")
+}
+
+@(test)
+test_site_config_rejects_an_unusable_locale :: proc(t: ^testing.T) {
+	w := test_website()
+	defer test_website_destroy(w)
+	w.opts.site_dir = "tests/fixture-config-bad-locale"
+
+	testing.expect(t, !load_site_config(w), "a locale that is not a language tag is rejected")
+}

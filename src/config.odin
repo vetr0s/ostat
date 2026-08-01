@@ -84,10 +84,12 @@ and title is therefore enough, and does not have to restate the struct.
 Having no site.json is not an error. The defaults describe a working site, and
 a content directory on its own should still build.
 
-Everything this returns is untrusted in a way a compile-time literal was not,
-so config strings are escaped where they reach markup rather than here. The
-one exception is base_url, which is checked below because it is concatenated
-into every absolute URL the build emits.
+Everything this returns is untrusted in a way a compile-time literal was not.
+Strings that reach markup as text are escaped where they land. base_url and
+locale are not: they are concatenated into URLs and attributes at eight call
+sites, and are checked here instead. That is the right shape for them, because
+base_url is supposed to be one URL and locale one language tag, and a value
+that cannot be written into an attribute is neither.
 */
 load_site_config :: proc(w: ^Website) -> bool {
 	path := fmt.aprintf("%s/%s", w.opts.site_dir, CONFIG_FILE, allocator = w.scratch)
@@ -117,6 +119,43 @@ load_site_config :: proc(w: ^Website) -> bool {
 	for f in required {
 		if f.value == "" {
 			fmt.eprintfln("ostat: %s: %q cannot be empty", path, f.name)
+			return false
+		}
+	}
+	return validate_identity(w, path)
+}
+
+// The offending rune and false, or true.
+//
+// base_url reaches og:url, <loc>, <link> and <atom:link> without being escaped
+// at any of them, so it may not carry a character that would end an attribute
+// or an XML text node. Nor could a real URL.
+//
+// Not file-private: -base-url replaces this value after the file is read, and
+// checking one door and not the other is how the check gets walked around.
+check_base_url :: proc(url: string) -> (bad: rune, ok: bool) {
+	for c in url {
+		switch {
+		case c == '"', c == '\'', c == '<', c == '>', c == '&', c <= ' ', c == 0x7f:
+			return c, false
+		}
+	}
+	return 0, true
+}
+
+// locale reaches the html lang attribute and <language>, unescaped at both.
+@(private = "file")
+validate_identity :: proc(w: ^Website, path: string) -> bool {
+	if c, ok := check_base_url(w.config.base_url); !ok {
+		fmt.eprintfln("ostat: %s: base_url cannot contain %q", path, c)
+		return false
+	}
+
+	for c in w.config.locale {
+		switch {
+		case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9', c == '-':
+		case:
+			fmt.eprintfln("ostat: %s: %q is not a language tag", path, w.config.locale)
 			return false
 		}
 	}
