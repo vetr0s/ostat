@@ -21,6 +21,7 @@ test_website :: proc() -> ^Website {
 	w.scratch = virtual.arena_allocator(&w.scratch_arena)
 
 	w.config = DEFAULT_SITE
+	w.fragments = DEFAULT_FRAGMENTS
 	w.opts.out_dir = "public"
 	w.pages = make([dynamic]^Page, w.perm)
 	w.articles = make([dynamic]^Page, w.perm)

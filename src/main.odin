@@ -42,6 +42,7 @@ Website :: struct {
 	scratch:       runtime.Allocator,
 
 	config:        Site_Config,
+	fragments:     Fragments,
 	opts:          Options,
 	today:         string, // "2026-07-27", for the -future cutoff
 
@@ -89,6 +90,7 @@ cmd_build :: proc(args: []string) -> bool {
 
 	parse_build_args(&w, args) or_return
 	load_site_config(&w) or_return
+	load_fragments(&w) or_return
 
 	// After the file, not before: -base-url is an override of whatever the site
 	// says, and loading site.json on top of it would put the file back in front.
@@ -179,6 +181,7 @@ website_init :: proc(w: ^Website) -> bool {
 	w.scratch = virtual.arena_allocator(&w.scratch_arena)
 
 	w.config = DEFAULT_SITE
+	w.fragments = DEFAULT_FRAGMENTS
 	w.pages = make([dynamic]^Page, w.perm)
 	w.articles = make([dynamic]^Page, w.perm)
 	w.sections = make(map[string]^Page, allocator = w.perm)

@@ -7,22 +7,39 @@ import "core:strings"
 /*
 Every layout, as a procedure. There is no template language: gingerBill's
 generator writes HTML with io.write_string and fmt.wprintf, and this follows
-it. Static chunks that never branch are #load-ed from src/html.
+it. Static chunks that never branch come from the site's fragments, in
+fragments.odin.
 
 There is no footer. The colophon it linked to is reachable from the home
 page's Elsewhere list.
 */
 
-HEAD_STATIC :: #load("html/head.html", string)
-
 render_all :: proc(w: ^Website) -> bool {
 	for p in w.pages {
 		write_output(w, p.out_path, build_page(w, p), p.source) or_return
 	}
+
+	not_found := not_found_page(w)
+	write_output(w, not_found.out_path, build_page(w, not_found), not_found.source) or_return
+
 	render_feeds(w) or_return
 	render_sitemap(w) or_return
 	copy_static(w) or_return
 	return true
+}
+
+// A 404 is a page in every respect but one: nothing links to it, so it is built
+// like a page and kept out of w.pages, and therefore out of every listing, the
+// feed and the sitemap.
+not_found_page :: proc(w: ^Website) -> ^Page {
+	p := new(Page, w.scratch)
+	p.title = "Not Found"
+	p.source = FRAGMENT_DIR + "/not-found-404.html"
+	p.url = "/404.html"
+	p.out_path = "404.html"
+	p.content = w.fragments.not_found
+	p.notes = make([dynamic]Note, w.scratch)
+	return p
 }
 
 // Building a page and writing it are separate so that a layout can be asserted
@@ -31,9 +48,13 @@ render_all :: proc(w: ^Website) -> bool {
 build_page :: proc(w: ^Website, p: ^Page) -> string {
 	b := strings.builder_make(w.scratch)
 
-	fmt.sbprintf(&b, "<!DOCTYPE html>\n<html lang=\"%s\">\n<head>\n", html_lang(w))
+	// The two header halves sandwich the only part of the head that varies per
+	// page. Everything else about it is the site's, not the generator's.
+	fmt.sbprintf(&b, "<!DOCTYPE html>\n<html lang=\"%s\">\n", html_lang(w))
+	strings.write_string(&b, w.fragments.header_01)
 	write_head(w, &b, p)
-	strings.write_string(&b, "</head>\n<body>\n  <header>")
+	strings.write_string(&b, w.fragments.header_02)
+	strings.write_string(&b, "  <header>")
 	write_header(w, &b, p)
 	strings.write_string(&b, "</header>\n  <main>\n")
 
@@ -56,8 +77,6 @@ write_head :: proc(w: ^Website, b: ^strings.Builder, p: ^Page) {
 	desc := page_description(w, p, w.scratch)
 	kind := "website" if p.is_home || p.is_section else "article"
 
-	strings.write_string(b, `<meta charset="UTF-8">` + "\n")
-	strings.write_string(b, `<meta name="viewport" content="width=device-width, initial-scale=1.0">` + "\n")
 	fmt.sbprintfln(b, "<title>%s</title>", html_escape(title, w.scratch))
 	fmt.sbprintfln(b, `<meta name="description" content="%s">`, html_escape(desc, w.scratch))
 	fmt.sbprintfln(b, `<meta name="author" content="%s">`, html_escape(w.config.author, w.scratch))
@@ -74,8 +93,6 @@ write_head :: proc(w: ^Website, b: ^strings.Builder, p: ^Page) {
 			html_escape(title, w.scratch),
 		)
 	}
-
-	strings.write_string(b, HEAD_STATIC)
 }
 
 // One bar on every page: where you are, and the way back out. It is a trail,

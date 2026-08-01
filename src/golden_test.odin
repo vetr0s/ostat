@@ -105,6 +105,10 @@ test_golden_pages :: proc(t: ^testing.T) {
 	for p in w.pages {
 		expect_matches_golden(t, p.out_path, build_page(w, p))
 	}
+
+	// Not in w.pages, because nothing links to it, so it needs asking for.
+	not_found := not_found_page(w)
+	expect_matches_golden(t, not_found.out_path, build_page(w, not_found))
 }
 
 @(test)
