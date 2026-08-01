@@ -104,7 +104,21 @@ cmd_build :: proc(args: []string) -> bool {
 	return true
 }
 
-@(private = "file")
+/*
+The value a flag takes, or a message and false.
+
+Checking only that another token exists is what `ostat build p -o -drafts` used
+to do: it took "-drafts" as the output directory, created one, and reported
+success. A flag is never a value, so a leading `-` is the mistake being made.
+*/
+flag_value :: proc(args: []string, i: int, flag, what: string) -> (value: string, ok: bool) {
+	if i >= len(args) || strings.has_prefix(args[i], "-") {
+		fmt.eprintfln("ostat: %s needs %s", flag, what)
+		return "", false
+	}
+	return args[i], true
+}
+
 parse_build_args :: proc(w: ^Website, args: []string) -> bool {
 	w.opts.out_dir = "public"
 
@@ -114,29 +128,18 @@ parse_build_args :: proc(w: ^Website, args: []string) -> bool {
 		switch arg {
 		case "-o":
 			i += 1
-			if i >= len(args) {
-				fmt.eprintln("ostat: -o needs a directory")
-				return false
-			}
-			w.opts.out_dir = args[i]
+			w.opts.out_dir = flag_value(args, i, "-o", "a directory") or_return
 		case "-base-url":
 			i += 1
-			if i >= len(args) {
-				fmt.eprintln("ostat: -base-url needs a url")
-				return false
-			}
-			w.opts.base_url = args[i]
+			w.opts.base_url = flag_value(args, i, "-base-url", "a url") or_return
 		case "-today":
 			i += 1
-			if i >= len(args) {
-				fmt.eprintln("ostat: -today needs a date")
+			today := flag_value(args, i, "-today", "a date") or_return
+			if _, _, _, ok := parse_date(today); !ok {
+				fmt.eprintfln("ostat: -today: %q is not a YYYY-MM-DD date", today)
 				return false
 			}
-			if _, _, _, ok := parse_date(args[i]); !ok {
-				fmt.eprintfln("ostat: -today: %q is not a YYYY-MM-DD date", args[i])
-				return false
-			}
-			w.today = args[i]
+			w.today = today
 		case "-drafts":
 			w.opts.drafts = true
 		case "-future":

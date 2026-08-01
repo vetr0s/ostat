@@ -45,7 +45,6 @@ cmd_new :: proc(args: []string) -> bool {
 	return true
 }
 
-@(private = "file")
 parse_new_args :: proc(args: []string) -> (rel, site_dir: string, ok: bool) {
 	site_dir = "."
 
@@ -54,11 +53,7 @@ parse_new_args :: proc(args: []string) -> (rel, site_dir: string, ok: bool) {
 		switch args[i] {
 		case "-s":
 			i += 1
-			if i >= len(args) {
-				fmt.eprintln("ostat: -s needs a site directory")
-				return
-			}
-			site_dir = args[i]
+			site_dir = flag_value(args, i, "-s", "a site directory") or_return
 		case:
 			if strings.has_prefix(args[i], "-") {
 				fmt.eprintfln("ostat: unknown option %q", args[i])
