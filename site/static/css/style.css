@@ -552,4 +552,12 @@ th {
     font-size: 0.85em;
 }
 
+/* The same treatment as the date above it: apparatus under the title rather
+   than prose competing with it. */
+.post-entry > .entry-summary {
+    margin-block-start: 0.15em;
+    color: var(--color-muted);
+    font-size: 0.85em;
+}
+
 .empty { color: var(--color-muted); }

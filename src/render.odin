@@ -159,7 +159,7 @@ write_list :: proc(w: ^Website, b: ^strings.Builder, p: ^Page) {
 	strings.write_string(b, p.content)
 
 	pages := section_pages(w, p)
-	write_post_entries(w, b, pages, "Nothing published here yet.")
+	write_post_entries(w, b, pages, "Nothing published here yet.", summaries = true)
 }
 
 @(private = "file")
@@ -184,8 +184,28 @@ write_section_head :: proc(w: ^Website, b: ^strings.Builder, title, feed_url: st
 	strings.write_string(b, "  </div>\n")
 }
 
+/*
+An index of pages: a link, a date when there is one, and a summary when the
+caller wants one.
+
+`summaries` is the section listings and not the home page. A section index has
+room to say what each page is, and for a section whose pages carry no date a
+link on its own is all there would otherwise be. The home page's recent list is
+five entries under two other sections and stays a list of titles.
+
+The summary is the front matter's description and nothing else. page_description
+would fall back to the opening paragraph, which is right for a meta tag nobody
+reads in place, and wrong here: an author who wrote no description gets no line
+rather than an arbitrary one.
+*/
 @(private = "file")
-write_post_entries :: proc(w: ^Website, b: ^strings.Builder, pages: []^Page, empty: string) {
+write_post_entries :: proc(
+	w: ^Website,
+	b: ^strings.Builder,
+	pages: []^Page,
+	empty: string,
+	summaries := false,
+) {
 	if len(pages) == 0 {
 		fmt.sbprintfln(b, `  <p class="empty">%s</p>`, empty)
 		return
@@ -197,6 +217,13 @@ write_post_entries :: proc(w: ^Website, b: ^strings.Builder, pages: []^Page, emp
 		// get <time datetime=""></time>, which is not a time and not valid.
 		if p.date != "" {
 			fmt.sbprintfln(b, `    <time datetime="%s">%s</time>`, p.date, p.date)
+		}
+		if summaries && p.description != "" {
+			fmt.sbprintfln(
+				b,
+				`    <p class="entry-summary">%s</p>`,
+				html_escape(p.description, w.scratch),
+			)
 		}
 		strings.write_string(b, "  </article>\n")
 	}
