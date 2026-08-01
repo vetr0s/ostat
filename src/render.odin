@@ -106,15 +106,22 @@ write_header :: proc(w: ^Website, b: ^strings.Builder, p: ^Page) {
 	case p.is_home:
 		fmt.sbprintfln(b, `    <span class="here" aria-current="page">%s</span>`, brand)
 	case p.is_section:
-		section := html_escape(p.section, w.scratch)
 		fmt.sbprintfln(b, `    <a href="/">%s</a>`, brand)
 		strings.write_string(b, "    <span class=\"sep\">/</span>\n")
-		fmt.sbprintfln(b, `    <span class="here" aria-current="page">%s</span>`, section)
+		fmt.sbprintfln(
+			b,
+			`    <span class="here" aria-current="page">%s</span>`,
+			section_crumb(w, p.section),
+		)
 	case p.section != "":
-		section := html_escape(p.section, w.scratch)
 		fmt.sbprintfln(b, `    <a href="/">%s</a>`, brand)
 		strings.write_string(b, "    <span class=\"sep\">/</span>\n")
-		fmt.sbprintfln(b, `    <a href="/%s/">%s</a>`, section, section)
+		fmt.sbprintfln(
+			b,
+			`    <a href="/%s/">%s</a>`,
+			html_escape(p.section, w.scratch),
+			section_crumb(w, p.section),
+		)
 	case:
 		// A page at the content root, like the colophon: no section to climb.
 		fmt.sbprintfln(b, `    <a href="/">%s</a>`, brand)
@@ -129,6 +136,27 @@ write_header :: proc(w: ^Website, b: ^strings.Builder, p: ^Page) {
 	strings.write_string(b, "  </p>\n")
 	strings.write_string(b, `  <button id="theme-toggle" type="button" aria-label="Toggle color theme"></button>` + "\n")
 	strings.write_string(b, "</nav>\n  ")
+}
+
+/*
+What a section is called, for the trail.
+
+Its _index.md title, not its directory name. The directory is a URL segment and
+the title is the section's name, and the two are only the same word by
+coincidence: ostat's own posts live in blog/ and the section is called Release
+Notes, so every one of them claimed to sit under "blog".
+
+Lowercased, because every other crumb is. A page at the content root already
+lowercases its title here, and the directory names this used to print happened
+to be lowercase, which is the only reason the trail looked deliberate.
+*/
+@(private = "file")
+section_crumb :: proc(w: ^Website, section: string) -> string {
+	name := section
+	if s, found := w.sections[section]; found && s.title != "" {
+		name = s.title
+	}
+	return html_escape(strings.to_lower(name, w.scratch), w.scratch)
 }
 
 // The site's own document, with the recent posts dropped in where its marker

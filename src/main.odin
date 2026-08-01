@@ -7,7 +7,7 @@ import "core:os"
 import "core:strings"
 import "core:time"
 
-VERSION :: "0.4.0"
+VERSION :: "0.5.0"
 
 USAGE :: `ostat - a static site generator
 

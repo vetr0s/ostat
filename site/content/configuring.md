@@ -128,3 +128,8 @@ One section is special: the one named by `BLOG_SECTION`, `blog` by default. Its
 pages are the only ones that carry a date, appear in the feed, or reach the
 home page's recent list. Everything else is a plain section whose pages are
 listed alphabetically.
+
+A section is named by the `title` in its `_index.md`, and that is what the
+breadcrumb shows. The directory is a URL segment and nothing more, so a
+`blog/` directory whose `_index.md` is titled `Release Notes` is called release
+notes everywhere a reader sees it, and `/blog/` everywhere a browser does.
