@@ -69,7 +69,7 @@ strip_tags :: proc(html: string, allocator := context.allocator) -> string {
 		case in_tag:
 		// skipped
 		case html[i] == '&':
-			end := strings.index_byte(html[i:], ';')
+			end := entity_end(html[i:])
 			if end < 0 {
 				strings.write_byte(&b, html[i])
 				continue
@@ -81,6 +81,28 @@ strip_tags :: proc(html: string, allocator := context.allocator) -> string {
 		}
 	}
 	return strings.to_string(b)
+}
+
+// The offset of the ';' closing an entity at the start of s, or -1.
+//
+// Bounded and shape-checked: a bare '&' used to search the whole remaining
+// document for a ';' and swallow everything in between as one entity. cmark
+// escapes a bare '&' before this ever sees one, so it took raw HTML to reach.
+@(private = "file")
+entity_end :: proc(s: string) -> int {
+	// "&#x201C;" is the longest shape worth recognising; decode_entity knows
+	// far fewer than that.
+	for i := 1; i < len(s) && i <= 8; i += 1 {
+		switch c := s[i]; {
+		case c == ';':
+			return i > 1 ? i : -1
+		case c == '#' && i == 1:
+		case c >= '0' && c <= '9', c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z':
+		case:
+			return -1
+		}
+	}
+	return -1
 }
 
 @(private = "file")

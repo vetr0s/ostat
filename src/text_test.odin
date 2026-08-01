@@ -19,6 +19,18 @@ test_strip_tags :: proc(t: ^testing.T) {
 }
 
 @(test)
+test_strip_tags_bounds_the_entity_scan :: proc(t: ^testing.T) {
+	// A bare '&' searched the whole remaining string for a ';' and swallowed
+	// everything up to it as one entity.
+	out := strip_tags("<p>Tom & Jerry, a duo; and more.</p>", context.temp_allocator)
+	testing.expect_value(t, out, "Tom & Jerry, a duo; and more.")
+
+	// A real entity still decodes, and one that is merely long does not.
+	testing.expect_value(t, strip_tags("a &amp; b", context.temp_allocator), "a & b")
+	testing.expect_value(t, strip_tags("&notanentityatall;", context.temp_allocator), "&notanentityatall;")
+}
+
+@(test)
 test_truncate_words :: proc(t: ^testing.T) {
 	testing.expect_value(t, truncate_words("short", 160, context.temp_allocator), "short")
 	// Cuts on a word boundary, not mid-word.

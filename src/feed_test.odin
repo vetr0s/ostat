@@ -113,3 +113,32 @@ test_protocol_relative_urls_are_left_alone :: proc(t: ^testing.T) {
 	out := absolutize_urls(w, `<img src="//cdn.example/a.png">`, w.scratch)
 	testing.expect_value(t, out, `<img src="//cdn.example/a.png">`)
 }
+
+// cmark writes double-quoted href and src and nothing else, so every shape
+// below arrives only through raw HTML written into a post. A feed item that
+// keeps a root-relative URL resolves it against the reader's host, and the
+// generator cannot see that it happened.
+@(test)
+test_feed_absolutises_every_url_shape :: proc(t: ^testing.T) {
+	w := test_website()
+	w.config.base_url = "https://example.test/"
+
+	cases := [][2]string {
+		{`<a href='/x/'>x</a>`, `<a href='https://example.test/x/'>x</a>`},
+		{`<img src=/a.png>`, `<img src=https://example.test/a.png>`},
+		{`<video poster="/p.jpg"></video>`, `<video poster="https://example.test/p.jpg"></video>`},
+		{`<blockquote cite="/src/">q</blockquote>`, `<blockquote cite="https://example.test/src/">q</blockquote>`},
+		{
+			`<img srcset="/a.png 1x, /b.png 2x">`,
+			`<img srcset="https://example.test/a.png 1x, https://example.test/b.png 2x">`,
+		},
+		{`<div style="background: url(/bg.png)"></div>`, `<div style="background: url(https://example.test/bg.png)"></div>`},
+		{`<div style="background: url('/bg.png')"></div>`, `<div style="background: url('https://example.test/bg.png')"></div>`},
+		// A longer name that merely ends in one of the attributes is not a URL
+		// to the browser and must not be rewritten.
+		{`<a data-href="/x/">x</a>`, `<a data-href="/x/">x</a>`},
+	}
+	for c in cases {
+		testing.expect_value(t, absolutize_urls(w, c[0], w.scratch), c[1])
+	}
+}

@@ -67,55 +67,139 @@ feed_item_content :: proc(w: ^Website, p: ^Page) -> (content: string, ok: bool) 
 	return absolutize_urls(w, strings.to_string(b), w.scratch), true
 }
 
+// Attributes whose value is a URL. srcset holds a comma-separated list of
+// them, so it is rewritten entry by entry rather than as one value.
+@(rodata)
+URL_ATTRS := [?]string{"href", "src", "srcset", "poster", "cite"}
+
+SRCSET_ATTR :: "srcset"
+
 // A feed item is read on someone else's host, where a root-relative link
-// resolves against their document rather than this site. Every href and src
-// that starts at the root is rewritten to an absolute URL.
+// resolves against their document rather than this site. Every URL that starts
+// at the root is rewritten to an absolute one.
+//
+// cmark emits only double-quoted href and src, so everything else this handles
+// is reachable only through raw HTML written into a post. That is also the only
+// way to write a URL the generator then cannot see is broken.
 absolutize_urls :: proc(w: ^Website, html: string, allocator := context.allocator) -> string {
 	base := strings.trim_suffix(w.config.base_url, "/")
 
 	b := strings.builder_make(allocator)
-	rest := html
-
+	i := 0
 	for {
-		i := next_root_relative(rest)
-		if i < 0 {
+		start, end, list, found := find_url_value(html, i)
+		if !found {
 			break
 		}
-		strings.write_string(&b, rest[:i])
-		strings.write_string(&b, base)
-		rest = rest[i:]
+		strings.write_string(&b, html[i:start])
+		if list {
+			write_absolute_srcset(&b, html[start:end], base)
+		} else {
+			write_absolute_url(&b, html[start:end], base)
+		}
+		i = end
 	}
 
-	strings.write_string(&b, rest)
+	strings.write_string(&b, html[i:])
 	return strings.to_string(b)
 }
 
-// The offset of the `/` opening a root-relative href or src value, or -1.
+// Deliberately not an HTML parser. It finds the attribute names that carry a
+// URL and the CSS url() an inline style can hold, and takes the quoted or bare
+// run that follows each.
 @(private = "file")
-next_root_relative :: proc(html: string) -> int {
-	offset := 0
+find_url_value :: proc(html: string, from: int) -> (start, end: int, list, ok: bool) {
+	for i := from; i < len(html); i += 1 {
+		// A name character before the match means a longer name ending in one
+		// of these, like data-href, which is not a URL to the browser.
+		if name_byte(html, i - 1) {
+			continue
+		}
+		if strings.has_prefix(html[i:], "url(") {
+			start, end = bounded_value(html, i + len("url("), ')')
+			return start, end, false, true
+		}
+		for attr in URL_ATTRS {
+			eq := i + len(attr)
+			if !strings.has_prefix(html[i:], attr) || eq >= len(html) || html[eq] != '=' {
+				continue
+			}
+			start, end = bounded_value(html, eq + 1, '>')
+			return start, end, attr == SRCSET_ATTR, true
+		}
+	}
+	return 0, 0, false, false
+}
+
+// The byte range of a value starting at `at`: the run inside the quotes, or the
+// bare run up to the first whitespace or `stop`.
+@(private = "file")
+bounded_value :: proc(html: string, at: int, stop: byte) -> (start, end: int) {
+	if at >= len(html) {
+		return at, at
+	}
+	if q := html[at]; q == '"' || q == '\'' {
+		start = at + 1
+		if i := strings.index_byte(html[start:], q); i >= 0 {
+			return start, start + i
+		}
+		return start, len(html)
+	}
+
+	start = at
+	for end = at; end < len(html); end += 1 {
+		switch html[end] {
+		case stop, ' ', '\t', '\n', '\r':
+			return start, end
+		}
+	}
+	return start, end
+}
+
+@(private = "file")
+name_byte :: proc(html: string, i: int) -> bool {
+	if i < 0 {
+		return false
+	}
+	switch c := html[i]; {
+	case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9', c == '-', c == '_':
+		return true
+	}
+	return false
+}
+
+@(private = "file")
+write_absolute_url :: proc(b: ^strings.Builder, url, base: string) {
+	// A protocol-relative URL is already absolute enough.
+	if strings.has_prefix(url, "/") && !strings.has_prefix(url, "//") {
+		strings.write_string(b, base)
+	}
+	strings.write_string(b, url)
+}
+
+// "/a.png 1x, /b.png 2x". The descriptor trails its URL, so writing the entry
+// whole after the base is enough; only the leading space needs preserving.
+@(private = "file")
+write_absolute_srcset :: proc(b: ^strings.Builder, value, base: string) {
+	rest := value
 	for {
-		rest := html[offset:]
-
-		href := strings.index(rest, `href="/`)
-		src := strings.index(rest, `src="/`)
-
-		i, width: int
-		switch {
-		case href < 0 && src < 0:
-			return -1
-		case src < 0 || (href >= 0 && href < src):
-			i, width = href, len(`href="`)
-		case:
-			i, width = src, len(`src="`)
+		entry, comma := rest, strings.index_byte(rest, ',')
+		if comma >= 0 {
+			entry = rest[:comma]
 		}
 
-		slash := offset + i + width
-		// A protocol-relative URL is already absolute enough.
-		if slash + 1 >= len(html) || html[slash + 1] != '/' {
-			return slash
+		lead := 0
+		for lead < len(entry) && (entry[lead] == ' ' || entry[lead] == '\t' || entry[lead] == '\n') {
+			lead += 1
 		}
-		offset = slash + 1
+		strings.write_string(b, entry[:lead])
+		write_absolute_url(b, entry[lead:], base)
+
+		if comma < 0 {
+			return
+		}
+		strings.write_byte(b, ',')
+		rest = rest[comma + 1:]
 	}
 }
 
