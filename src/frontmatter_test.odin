@@ -55,27 +55,80 @@ test_front_matter_rejects_bad_date :: proc(t: ^testing.T) {
 
 @(test)
 test_parse_date :: proc(t: ^testing.T) {
-	y, m, d, ok := parse_date("2026-07-12")
+	d, ok := parse_date("2026-07-12")
 	testing.expect_value(t, ok, true)
-	testing.expect_value(t, y, 2026)
-	testing.expect_value(t, m, 7)
-	testing.expect_value(t, d, 12)
+	testing.expect_value(t, d, Date{year = 2026, month = 7, day = 12})
 
 	// A leading zero must not be read as octal.
-	_, m, d, ok = parse_date("2026-08-09")
+	d, ok = parse_date("2026-08-09")
 	testing.expect_value(t, ok, true)
-	testing.expect_value(t, m, 8)
-	testing.expect_value(t, d, 9)
+	testing.expect_value(t, d.month, 8)
+	testing.expect_value(t, d.day, 9)
 
 	// Leap years decide whether February has a 29th.
-	_, _, _, ok = parse_date("2024-02-29")
+	_, ok = parse_date("2024-02-29")
 	testing.expect_value(t, ok, true)
-	_, _, _, ok = parse_date("2026-02-29")
+	_, ok = parse_date("2026-02-29")
 	testing.expect_value(t, ok, false)
 
 	for bad in ([]string{"2026-7-12", "2026/07/12", "", "2026-13-01", "2026-07-32"}) {
-		_, _, _, ok = parse_date(bad)
+		_, ok = parse_date(bad)
 		testing.expectf(t, !ok, "%q should not parse", bad)
+	}
+}
+
+// The time exists to order two posts published on the same day, which a date
+// alone cannot do. It is optional, and a date without one is midnight, so
+// every stamp written before this was understood keeps its meaning.
+@(test)
+test_parse_date_takes_an_optional_time :: proc(t: ^testing.T) {
+	d, ok := parse_date("2026-07-12T14:30")
+	testing.expect_value(t, ok, true)
+	testing.expect_value(t, d, Date{year = 2026, month = 7, day = 12, hour = 14, minute = 30})
+
+	d, ok = parse_date("2026-07-12T14:30:05")
+	testing.expect_value(t, ok, true)
+	testing.expect_value(t, d.second, 5)
+
+	// A bare date is midnight, so it sorts at the start of its own day.
+	d, _ = parse_date("2026-07-12")
+	testing.expect_value(t, d.hour, 0)
+	testing.expect_value(t, d.minute, 0)
+
+	bad := []string {
+		"2026-07-12T14",       // no minutes
+		"2026-07-12T14:30:",   // a separator with nothing after it
+		"2026-07-12 14:30",    // a space is not the separator
+		"2026-07-12T24:00",    // no such hour
+		"2026-07-12T14:60",    // no such minute
+		"2026-07-12T14:30:60", // no leap second
+		"2026-07-12T14:30:05Z",
+	}
+	for s in bad {
+		_, ok = parse_date(s)
+		testing.expectf(t, !ok, "%q should not parse", s)
+	}
+}
+
+// Written large unit first, a stamp sorts chronologically as a string, which
+// is the whole reason the posts can be ordered by comparing p.date.
+@(test)
+test_stamps_sort_chronologically_as_strings :: proc(t: ^testing.T) {
+	ordered := []string {
+		"2026-07-12",
+		"2026-07-12T00:01",
+		"2026-07-12T14:30",
+		"2026-07-12T14:30:05",
+		"2026-08-01",
+	}
+	for i in 1 ..< len(ordered) {
+		testing.expectf(
+			t,
+			ordered[i - 1] < ordered[i],
+			"%q should sort before %q",
+			ordered[i - 1],
+			ordered[i],
+		)
 	}
 }
 

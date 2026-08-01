@@ -23,11 +23,16 @@ endnote_html :: proc(body: string) -> (string, ^Page) {
 @(test)
 test_rfc822_date :: proc(t: ^testing.T) {
 	p := new(Page, context.temp_allocator)
-	p.date, p.year, p.month, p.day = "2026-07-12", 2026, 7, 12
+	p.date, p.stamp = "2026-07-12", {year = 2026, month = 7, day = 12}
 	testing.expect_value(t, rfc822_date(p, context.temp_allocator), "Sun, 12 Jul 2026 00:00:00 +0000")
 
-	p.date, p.year, p.month, p.day = "2026-07-27", 2026, 7, 27
+	p.date, p.stamp = "2026-07-27", {year = 2026, month = 7, day = 27}
 	testing.expect_value(t, rfc822_date(p, context.temp_allocator), "Mon, 27 Jul 2026 00:00:00 +0000")
+
+	// A stamp carrying a time reaches the feed as that time. Every post used
+	// to be published at midnight because that was the only thing it could say.
+	p.date, p.stamp = "2026-07-27T14:30:05", {2026, 7, 27, 14, 30, 5}
+	testing.expect_value(t, rfc822_date(p, context.temp_allocator), "Mon, 27 Jul 2026 14:30:05 +0000")
 
 	undated := new(Page, context.temp_allocator)
 	testing.expect_value(t, rfc822_date(undated, context.temp_allocator), "")

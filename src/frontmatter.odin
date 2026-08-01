@@ -74,7 +74,7 @@ parse_front_matter :: proc(
 		return {}, "", .Missing_Title
 	}
 	if a.date != "" {
-		if _, _, _, ok := parse_date(a.date); !ok {
+		if _, ok := parse_date(a.date); !ok {
 			return {}, "", .Bad_Date
 		}
 	}
@@ -107,27 +107,73 @@ valid_slug :: proc(s: string) -> bool {
 	return true
 }
 
-// "2026-07-12" -> 2026, 7, 12. Strict: exactly that shape, and a real date.
-parse_date :: proc(s: string) -> (year, month, day: int, ok: bool) {
-	if len(s) != 10 || s[4] != '-' || s[7] != '-' {
+Date :: struct {
+	year, month, day:     int,
+	hour, minute, second: int,
+}
+
+/*
+"2026-07-12", "2026-07-12T14:30", or "2026-07-12T14:30:05".
+
+The time is optional and midnight when absent, so a date on its own means what
+it has always meant. Strict otherwise: exactly one of those three shapes, and a
+real date.
+
+Written in this order a stamp sorts lexicographically, which is what orders the
+posts. A bare date sorts before any time on the same day, because "" is less
+than "T", and midnight is where a bare date belongs.
+*/
+parse_date :: proc(s: string) -> (d: Date, ok: bool) {
+	if len(s) < 10 || s[4] != '-' || s[7] != '-' {
 		return
 	}
 
 	// Base 10 explicitly. With base 0 strconv reads a leading zero as octal,
 	// which turns "08" and "09" into parse failures.
-	year  = strconv.parse_int(s[0:4],  10) or_return
-	month = strconv.parse_int(s[5:7],  10) or_return
-	day   = strconv.parse_int(s[8:10], 10) or_return
+	d.year  = strconv.parse_int(s[0:4],  10) or_return
+	d.month = strconv.parse_int(s[5:7],  10) or_return
+	d.day   = strconv.parse_int(s[8:10], 10) or_return
 
-	if month < 1 || month > 12 {
-		return 0, 0, 0, false
+	if d.month < 1 || d.month > 12 {
+		return {}, false
 	}
-	if day < 1 || day > days_in_month(year, month) {
-		return 0, 0, 0, false
+	if d.day < 1 || d.day > days_in_month(d.year, d.month) {
+		return {}, false
+	}
+
+	if len(s) > 10 && !parse_time_of_day(s[10:], &d) {
+		return {}, false
 	}
 
 	ok = true
 	return
+}
+
+// "T14:30" or "T14:30:05", the tail of a stamp. Seconds are optional.
+@(private = "file")
+parse_time_of_day :: proc(s: string, d: ^Date) -> bool {
+	if len(s) != 6 && len(s) != 9 {
+		return false
+	}
+	if s[0] != 'T' || s[3] != ':' || (len(s) == 9 && s[6] != ':') {
+		return false
+	}
+
+	ok: bool
+	if d.hour, ok = strconv.parse_int(s[1:3], 10); !ok {
+		return false
+	}
+	if d.minute, ok = strconv.parse_int(s[4:6], 10); !ok {
+		return false
+	}
+	if len(s) == 9 {
+		if d.second, ok = strconv.parse_int(s[7:9], 10); !ok {
+			return false
+		}
+	}
+
+	// No leap second. RSS would carry it and time.components_to_time would not.
+	return d.hour < 24 && d.minute < 60 && d.second < 60
 }
 
 days_in_month :: proc(year, month: int) -> int {

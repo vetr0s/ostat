@@ -122,7 +122,7 @@ test_html_lang :: proc(t: ^testing.T) {
 @(test)
 test_long_date :: proc(t: ^testing.T) {
 	p := new(Page, context.temp_allocator)
-	p.date, p.year, p.month, p.day = "2026-07-12", 2026, 7, 12
+	p.date, p.stamp = "2026-07-12", {year = 2026, month = 7, day = 12}
 	testing.expect_value(t, long_date(p, context.temp_allocator), "July 12, 2026")
 
 	// An undated page has nothing to format.

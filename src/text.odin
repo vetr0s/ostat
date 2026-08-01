@@ -197,10 +197,16 @@ first_paragraph :: proc(html: string, allocator := context.allocator) -> string 
 
 // "2026-07-12" -> "July 12, 2026"
 long_date :: proc(p: ^Page, allocator := context.allocator) -> string {
-	if p.month < 1 || p.month > 12 {
+	if p.stamp.month < 1 || p.stamp.month > 12 {
 		return p.date
 	}
-	return fmt.aprintf("%s %d, %d", MONTHS[p.month], p.day, p.year, allocator = allocator)
+	return fmt.aprintf(
+		"%s %d, %d",
+		MONTHS[p.stamp.month],
+		p.stamp.day,
+		p.stamp.year,
+		allocator = allocator,
+	)
 }
 
 // The brand, with its accented tail wrapped. Both halves come from config;

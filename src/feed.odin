@@ -246,24 +246,28 @@ build_feed :: proc(
 	return strings.to_string(b)
 }
 
-// RFC 822, which is what RSS wants. Front matter carries a date and no time,
-// so every post is stamped at midnight UTC.
+// RFC 822, which is what RSS wants. A stamp with no time is midnight, so a
+// post dated to the day still lands where it always did.
 rfc822_date :: proc(p: ^Page, allocator := context.allocator) -> string {
 	if p.date == "" {
 		return ""
 	}
 
-	t, ok := time.components_to_time(p.year, p.month, p.day, 0, 0, 0)
+	d := p.stamp
+	t, ok := time.components_to_time(d.year, d.month, d.day, d.hour, d.minute, d.second)
 	if !ok {
 		return ""
 	}
 
 	return fmt.aprintf(
-		"%s, %02d %s %04d 00:00:00 +0000",
+		"%s, %02d %s %04d %02d:%02d:%02d +0000",
 		WEEKDAY_ABBR[int(time.weekday(t))],
-		p.day,
-		MONTH_ABBR[p.month],
-		p.year,
+		d.day,
+		MONTH_ABBR[d.month],
+		d.year,
+		d.hour,
+		d.minute,
+		d.second,
 		allocator = allocator,
 	)
 }

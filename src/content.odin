@@ -36,10 +36,8 @@ Page :: struct {
 	description: string,
 	slug:        string,
 	section:     string, // "" for a page at the content root
-	date:        string, // "2026-07-12", or "" when undated
-	year:        int,
-	month:       int,
-	day:         int,
+	date:        string, // "2026-07-12" or "2026-07-12T14:30", "" when undated
+	stamp:       Date,   // the same value, parsed
 	draft:       bool,
 	is_section:  bool,
 	is_home:     bool,
@@ -63,9 +61,17 @@ collect_content :: proc(w: ^Website) -> bool {
 
 	walk_content(w, root, "") or_return
 
-	// Newest first. Dates are YYYY-MM-DD, so string order is date order.
+	// Newest first. A stamp is ISO 8601 written large-unit first, so string
+	// order is chronological order and a bare date sorts at its own midnight.
+	//
+	// The slug breaks a tie, because sort_by is not stable: two posts stamped
+	// identically would otherwise come out in an order that reflects nothing
+	// and could change when an unrelated post is added.
 	slice.sort_by(w.articles[:], proc(a, b: ^Page) -> bool {
-		return a.date > b.date
+		if a.date != b.date {
+			return a.date > b.date
+		}
+		return a.slug < b.slug
 	})
 
 	// The home page has no content file. It is the config plus the recent
@@ -169,7 +175,7 @@ load_page :: proc(w: ^Website, path, name, section: string) -> bool {
 
 	if fm.date != "" {
 		p.date = fm.date
-		p.year, p.month, p.day, _ = parse_date(fm.date)
+		p.stamp, _ = parse_date(fm.date)
 	}
 
 	if !w.opts.future && is_future(w, p) {
@@ -229,7 +235,14 @@ is_future :: proc(w: ^Website, p: ^Page) -> bool {
 	if p.date == "" {
 		return false
 	}
-	return p.date > w.today
+	// Compared as days, because the cutoff is one. A post stamped with a time
+	// today sorts after a bare today and is not in the future.
+	return day_of(p.date) > day_of(w.today)
+}
+
+// The date half of a stamp. Every stamp that parsed is at least this long.
+day_of :: proc(stamp: string) -> string {
+	return stamp[:10] if len(stamp) >= 10 else stamp
 }
 
 // The absolute URL for a page, for feeds and og:url.

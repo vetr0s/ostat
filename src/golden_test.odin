@@ -165,7 +165,8 @@ test_drafts_and_future_are_excluded_by_default :: proc(t: ^testing.T) {
 		testing.expectf(t, p.title != "A Draft", "a draft was published")
 		testing.expectf(t, p.title != "From the Future", "a future post was published")
 	}
-	testing.expect_value(t, len(w.articles), 2)
+	// Four: two dated to the day, two sharing a day and separated by a time.
+	testing.expect_value(t, len(w.articles), 4)
 }
 
 @(test)
@@ -180,7 +181,27 @@ test_drafts_and_future_are_included_on_request :: proc(t: ^testing.T) {
 	}
 	testing.expect(t, titles["A Draft"], "-drafts published the draft")
 	testing.expect(t, titles["From the Future"], "-future published the future post")
-	testing.expect_value(t, len(w.articles), 4)
+	testing.expect_value(t, len(w.articles), 6)
+}
+
+// The case a date alone cannot order. Two posts on one day used to come out in
+// whatever order an unstable sort left them in, which was neither the order
+// they were written nor the order of their file names.
+@(test)
+test_two_posts_on_one_day_are_ordered_by_time :: proc(t: ^testing.T) {
+	w := build_fixture()
+	defer test_website_destroy(w)
+	testing.expect(t, collect_content(w), "discovery succeeded")
+
+	order := make([dynamic]string, w.scratch)
+	for p in w.articles {
+		append(&order, p.title)
+	}
+	// Both are 2025-06-02. The third is that day with no time, which is
+	// midnight, so it belongs below them rather than between them.
+	testing.expect_value(t, order[0], "Later That Day")
+	testing.expect_value(t, order[1], "Earlier That Day")
+	testing.expect_value(t, order[2], "Notes and Tables")
 }
 
 @(test)

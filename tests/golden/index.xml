@@ -6,8 +6,24 @@
     <description>The site the golden tests build. Every shape the generator knows how to render, and nothing else.</description>
     <generator>ostat</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 02 Jun 2025 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 02 Jun 2025 17:45:00 +0000</lastBuildDate>
     <atom:link href="https://example.test/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Later That Day</title>
+      <link>https://example.test/blog/same-day-late/</link>
+      <pubDate>Mon, 02 Jun 2025 17:45:00 +0000</pubDate>
+      <guid>https://example.test/blog/same-day-late/</guid>
+      <description>&lt;p&gt;The later stamp sorts first.&lt;/p&gt;
+</description>
+    </item>
+    <item>
+      <title>Earlier That Day</title>
+      <link>https://example.test/blog/same-day-early/</link>
+      <pubDate>Mon, 02 Jun 2025 09:00:00 +0000</pubDate>
+      <guid>https://example.test/blog/same-day-early/</guid>
+      <description>&lt;p&gt;Two posts share a day. The time is what orders them.&lt;/p&gt;
+</description>
+    </item>
     <item>
       <title>Notes and Tables</title>
       <link>https://example.test/blog/notes-and-tables/</link>

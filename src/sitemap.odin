@@ -24,8 +24,10 @@ build_sitemap :: proc(w: ^Website) -> string {
 	for p in w.pages {
 		strings.write_string(&b, "  <url>\n")
 		fmt.sbprintfln(&b, "    <loc>%s</loc>", page_permalink(w, p, w.scratch))
+		// The day, not the stamp. A sitemap's W3C datetime needs a timezone
+		// once it carries a time, and a date on its own does not.
 		if p.date != "" {
-			fmt.sbprintfln(&b, "    <lastmod>%s</lastmod>", p.date)
+			fmt.sbprintfln(&b, "    <lastmod>%s</lastmod>", day_of(p.date))
 		}
 		strings.write_string(&b, "  </url>\n")
 	}

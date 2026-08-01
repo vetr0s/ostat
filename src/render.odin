@@ -215,8 +215,10 @@ write_post_entries :: proc(
 		fmt.sbprintfln(b, `    <a href="%s">%s</a>`, p.url, html_escape(p.title, w.scratch))
 		// Only the blog is dated. An undated page in any other section used to
 		// get <time datetime=""></time>, which is not a time and not valid.
+		// The attribute carries the whole stamp; a listing shows the day. The
+		// time is there to order two posts, not to be read in an index.
 		if p.date != "" {
-			fmt.sbprintfln(b, `    <time datetime="%s">%s</time>`, p.date, p.date)
+			fmt.sbprintfln(b, `    <time datetime="%s">%s</time>`, p.date, day_of(p.date))
 		}
 		if summaries && p.description != "" {
 			fmt.sbprintfln(

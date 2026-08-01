@@ -27,9 +27,28 @@ unmarshals straight into a struct, so the format costs almost no parser code.
 ---
 ````
 
-`title` is required. `date` must be `YYYY-MM-DD`. A `slug` may not contain a
-path separator, `..`, or whitespace: it becomes a directory name, and a content
-file is the least trusted input the generator has.
+`title` is required. A `slug` may not contain a path separator, `..`, or
+whitespace: it becomes a directory name, and a content file is the least
+trusted input the generator has.
+
+`date` is `YYYY-MM-DD`, optionally followed by a time as `THH:MM` or
+`THH:MM:SS`:
+
+````text
+"date": "2026-01-30"
+"date": "2026-01-30T14:30"
+"date": "2026-01-30T14:30:05"
+````
+
+The time is what separates two posts published on the same day. Without one a
+date can only say they are equal, and the sort has to fall back to the slug,
+which orders them by a rule about their file names rather than about them. A
+date on its own is midnight, so it sorts at the start of its day and reaches
+the feed the way it always has.
+
+The whole stamp goes in a `<time datetime>` attribute and the feed's
+`<pubDate>`. A listing shows the day: the time is there to order two posts,
+not to be read in an index.
 
 ## Margin notes
 

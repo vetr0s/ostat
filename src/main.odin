@@ -7,7 +7,7 @@ import "core:os"
 import "core:strings"
 import "core:time"
 
-VERSION :: "0.3.0"
+VERSION :: "0.4.0"
 
 USAGE :: `ostat - a static site generator
 
@@ -143,7 +143,7 @@ parse_build_args :: proc(w: ^Website, args: []string) -> bool {
 		case "-today":
 			i += 1
 			today := flag_value(args, i, "-today", "a date") or_return
-			if _, _, _, ok := parse_date(today); !ok {
+			if _, ok := parse_date(today); !ok {
 				fmt.eprintfln("ostat: -today: %q is not a YYYY-MM-DD date", today)
 				return false
 			}
