@@ -1,6 +1,8 @@
 package main
 
+import "core:strings"
 import "core:testing"
+import "core:unicode/utf8"
 
 @(test)
 test_html_escape :: proc(t: ^testing.T) {
@@ -21,6 +23,23 @@ test_truncate_words :: proc(t: ^testing.T) {
 	testing.expect_value(t, truncate_words("short", 160, context.temp_allocator), "short")
 	// Cuts on a word boundary, not mid-word.
 	testing.expect_value(t, truncate_words("one two three four", 12, context.temp_allocator), "one two…")
+}
+
+@(test)
+test_truncate_words_cuts_on_rune_boundaries :: proc(t: ^testing.T) {
+	// No ASCII space anywhere, so the boundary scan finds nothing and the cut
+	// falls back to the limit. That fallback used to be a byte offset, and
+	// landed inside a three-byte codepoint.
+	long := strings.repeat("日本語", 60, context.temp_allocator)
+	out := truncate_words(long, DESCRIPTION_LIMIT, context.temp_allocator)
+	testing.expect(t, utf8.valid_string(out), "the cut landed mid-codepoint")
+	// The limit, plus the ellipsis that marks the cut.
+	testing.expect_value(t, utf8.rune_count_in_string(out), DESCRIPTION_LIMIT + 1)
+
+	// The limit counts runes, so a description well inside it is not cut at
+	// all. Measured in bytes this one is 180 and was cut to two thirds.
+	short := strings.repeat("日本語", 20, context.temp_allocator)
+	testing.expect_value(t, truncate_words(short, DESCRIPTION_LIMIT, context.temp_allocator), short)
 }
 
 @(test)

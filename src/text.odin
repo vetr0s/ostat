@@ -102,17 +102,33 @@ decode_entity :: proc(e: string) -> string {
 
 // Cuts at the last word boundary inside the limit and marks the cut, which is
 // what Hugo's truncate did.
+//
+// The limit counts runes. It counted bytes and sliced at one, so a description
+// with no ASCII space inside the limit was cut at an arbitrary byte offset and
+// put a dangling continuation byte in a meta tag.
 truncate_words :: proc(s: string, limit: int, allocator := context.allocator) -> string {
-	if len(s) <= limit {
+	// Both offsets are rune boundaries by construction, which is the whole
+	// point of walking the string rather than indexing into it.
+	cut, last_space := -1, -1
+
+	count := 0
+	for r, i in s {
+		if count == limit {
+			cut = i
+			break
+		}
+		if r == ' ' {
+			last_space = i
+		}
+		count += 1
+	}
+	if cut < 0 {
 		return s
 	}
-
-	cut := limit
-	for cut > 0 && s[cut] != ' ' {
-		cut -= 1
-	}
-	if cut == 0 {
-		cut = limit
+	// A leading space is not a word boundary worth cutting at; fall back to the
+	// limit rather than returning nothing but an ellipsis.
+	if last_space > 0 {
+		cut = last_space
 	}
 	return fmt.aprintf("%s…", strings.trim_right_space(s[:cut]), allocator = allocator)
 }
