@@ -170,12 +170,17 @@ load_page :: proc(w: ^Website, path, name, section: string) -> bool {
 	}
 	p.out_path = fmt.aprintf("%sindex.html", p.url[1:], allocator = w.perm)
 
+	// Two pages resolving to one path both stayed in w.pages: both were listed,
+	// both reached the feed and the sitemap, and the later write won. The
+	// unreachable one advertised a URL that served the other page's content.
+	if other, taken := w.outputs[p.out_path]; taken {
+		fmt.eprintfln("ostat: %s: %s is already written by %s", path, p.url, other.source)
+		return false
+	}
+	w.outputs[p.out_path] = p
+
 	append(&w.pages, p)
 	if p.is_section {
-		if section in w.sections {
-			fmt.eprintfln("ostat: %s: two _index.md files for section %q", path, section)
-			return false
-		}
 		w.sections[strings.clone(section, w.perm)] = p
 	} else if section == BLOG_SECTION {
 		// A post carries a date or the feed emits an empty <pubDate> and sorts
