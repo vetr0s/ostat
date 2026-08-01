@@ -40,3 +40,11 @@ test_a_section_needs_an_index :: proc(t: ^testing.T) {
 	// written because the directory had no _index.md.
 	testing.expect(t, !discover("tests/fixture-sectionless"), "a section without an index is rejected")
 }
+
+@(test)
+test_the_home_page_is_not_authored_in_content :: proc(t: ^testing.T) {
+	// It was loaded, written, and then overwritten by the synthesised home
+	// page, which is appended after the walk. Both carried url "/", so the
+	// sitemap listed the front page twice and the authored file was gone.
+	testing.expect(t, !discover("tests/fixture-root-index"), "a root _index.md is rejected")
+}

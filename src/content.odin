@@ -170,8 +170,16 @@ load_page :: proc(w: ^Website, path, name, section: string) -> bool {
 	}
 
 	if p.is_section {
+		// The home page is synthesised after the walk, so this one was loaded,
+		// written, and then overwritten by it. Both carried url "/", so the
+		// sitemap advertised the front page twice and the authored file was
+		// simply gone.
+		if section == "" {
+			fmt.eprintfln("ostat: %s: the home page comes from %s/home.html", path, FRAGMENT_DIR)
+			return false
+		}
 		p.slug = ""
-		p.url = section == "" ? "/" : fmt.aprintf("/%s/", section, allocator = w.perm)
+		p.url = fmt.aprintf("/%s/", section, allocator = w.perm)
 	} else {
 		p.slug = strings.clone(
 			fm.slug != "" ? fm.slug : name[:len(name) - len(".md")],
