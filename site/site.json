@@ -1,5 +1,5 @@
 {
-    "base_url": "https://ostat.example/",
+    "base_url": "https://ostat.vetr0s.dev/",
     "title": "ostat",
     "description": "A static site generator written in Odin. Layouts are procedures, not templates.",
     "author": "ostat",

@@ -10,7 +10,9 @@ beside its content, but its shape is not configurable: that lives in
 `src/render.odin` and changing it means editing a procedure.
 
 The site in `site/` is ostat's own documentation, and building it is how the
-generator proves it works.
+generator proves it works. It is published at
+[ostat.vetr0s.dev](https://ostat.vetr0s.dev/) from `main`, built by the commit
+that is being published rather than by a pinned release.
 
 ## Requirements
 
@@ -189,6 +191,7 @@ src/
 site/                 ostat's documentation, and the demo site
   site.json           its identity, like any other site's
   html/home.html      its front page, like any other site's
+  static/CNAME        the domain GitHub Pages serves it from
 tests/
   fixture-site/       a site exercising every path
   golden/             its expected output, committed
