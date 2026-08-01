@@ -4,6 +4,10 @@ name: Deploy the documentation to GitHub Pages
 # checkout rather than a pinned ref, which is the point: the docs describe the
 # commit that built them, and a change that breaks the build cannot be
 # published without failing here first.
+#
+# The custom domain is the repository's Pages setting, not site/static/CNAME.
+# A workflow build ignores that file; it is kept because the domain belongs in
+# the repository somewhere a reader will find it.
 
 on:
   push:

@@ -191,7 +191,7 @@ src/
 site/                 ostat's documentation, and the demo site
   site.json           its identity, like any other site's
   html/home.html      its front page, like any other site's
-  static/CNAME        the domain GitHub Pages serves it from
+  static/CNAME        the domain, recorded here; Pages reads its own setting
 tests/
   fixture-site/       a site exercising every path
   golden/             its expected output, committed
