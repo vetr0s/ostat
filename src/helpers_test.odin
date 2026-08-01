@@ -26,6 +26,7 @@ test_website :: proc() -> ^Website {
 	w.articles = make([dynamic]^Page, w.perm)
 	w.sections = make(map[string]^Page, allocator = w.perm)
 	w.outputs = make(map[string]^Page, allocator = w.perm)
+	w.written = make(map[string]string, allocator = w.perm)
 	w.today = "2026-01-01"
 	return w
 }

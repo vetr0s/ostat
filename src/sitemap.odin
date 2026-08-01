@@ -12,7 +12,7 @@ carries a date.
 */
 
 render_sitemap :: proc(w: ^Website) -> bool {
-	return write_output(w, "sitemap.xml", build_sitemap(w))
+	return write_output(w, "sitemap.xml", build_sitemap(w), "the sitemap")
 }
 
 build_sitemap :: proc(w: ^Website) -> string {

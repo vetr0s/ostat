@@ -48,7 +48,8 @@ Website :: struct {
 	pages:         [dynamic]^Page,
 	articles:      [dynamic]^Page, // blog posts, newest first
 	sections:      map[string]^Page,
-	outputs:       map[string]^Page, // out_path -> the page that claimed it
+	outputs:       map[string]^Page,  // out_path -> the page that claimed it
+	written:       map[string]string, // out-relative path -> what generated it
 }
 
 main :: proc() {
@@ -182,6 +183,7 @@ website_init :: proc(w: ^Website) -> bool {
 	w.articles = make([dynamic]^Page, w.perm)
 	w.sections = make(map[string]^Page, allocator = w.perm)
 	w.outputs = make(map[string]^Page, allocator = w.perm)
+	w.written = make(map[string]string, allocator = w.perm)
 
 	y, m, d := time.date(time.now())
 	w.today = fmt.aprintf("%04d-%02d-%02d", y, int(m), d, allocator = w.perm)

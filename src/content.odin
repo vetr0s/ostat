@@ -74,6 +74,7 @@ collect_content :: proc(w: ^Website) -> bool {
 	home.title = w.config.title
 	home.description = w.config.description
 	home.is_home = true
+	home.source = CONFIG_FILE
 	home.url = "/"
 	home.out_path = "index.html"
 	home.feed_url = ROOT_FEED_PATH

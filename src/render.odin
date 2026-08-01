@@ -17,7 +17,7 @@ HEAD_STATIC :: #load("html/head.html", string)
 
 render_all :: proc(w: ^Website) -> bool {
 	for p in w.pages {
-		write_output(w, p.out_path, build_page(w, p)) or_return
+		write_output(w, p.out_path, build_page(w, p), p.source) or_return
 	}
 	render_feeds(w) or_return
 	render_sitemap(w) or_return
@@ -223,7 +223,9 @@ section_pages :: proc(w: ^Website, section: ^Page) -> []^Page {
 	return out[:]
 }
 
-write_output :: proc(w: ^Website, rel, body: string) -> bool {
+// `by` names what produced the document, for the collision message copy_static
+// needs. It is the only reason a caller has to say.
+write_output :: proc(w: ^Website, rel, body, by: string) -> bool {
 	path := fmt.aprintf("%s/%s", w.opts.out_dir, rel, allocator = w.scratch)
 
 	dir := path
@@ -235,6 +237,8 @@ write_output :: proc(w: ^Website, rel, body: string) -> bool {
 		fmt.eprintfln("ostat: cannot write %s: %v", path, err)
 		return false
 	}
+
+	w.written[strings.clone(rel, w.perm)] = strings.clone(by, w.perm)
 	return true
 }
 
@@ -258,26 +262,41 @@ copy_static :: proc(w: ^Website) -> bool {
 	if !os.is_directory(root) {
 		return true
 	}
-	return copy_tree(w, root, w.opts.out_dir)
+	return copy_tree(w, root, "")
 }
 
+// `rel` is the path within the output directory, which is what w.written is
+// keyed on. Static is copied last, so without the check below a static file
+// silently replaced the generated page at the same path.
 @(private = "file")
-copy_tree :: proc(w: ^Website, src, dst: string) -> bool {
+copy_tree :: proc(w: ^Website, src, rel: string) -> bool {
 	entries, err := os.read_all_directory_by_path(src, w.scratch)
 	if err != nil {
 		fmt.eprintfln("ostat: cannot read %s: %v", src, err)
 		return false
 	}
 
+	dst := w.opts.out_dir
+	if rel != "" {
+		dst = fmt.aprintf("%s/%s", w.opts.out_dir, rel, allocator = w.scratch)
+	}
 	ensure_directory(dst) or_return
 
 	for entry in entries {
-		out := fmt.aprintf("%s/%s", dst, entry.name, allocator = w.scratch)
+		sub := entry.name
+		if rel != "" {
+			sub = fmt.aprintf("%s/%s", rel, entry.name, allocator = w.scratch)
+		}
 		if entry.type == .Directory {
-			copy_tree(w, entry.fullpath, out) or_return
+			copy_tree(w, entry.fullpath, sub) or_return
 			continue
 		}
+		if by, taken := w.written[sub]; taken {
+			fmt.eprintfln("ostat: %s would overwrite %s, generated from %s", entry.fullpath, sub, by)
+			return false
+		}
 
+		out := fmt.aprintf("%s/%s", dst, entry.name, allocator = w.scratch)
 		data, read_err := os.read_entire_file_from_path(entry.fullpath, w.scratch)
 		if read_err != nil {
 			fmt.eprintfln("ostat: cannot read %s: %v", entry.fullpath, read_err)
