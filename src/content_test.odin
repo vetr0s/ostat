@@ -25,3 +25,18 @@ test_two_pages_may_not_claim_one_path :: proc(t: ^testing.T) {
 	// sitemap, while the later write took the path they shared.
 	testing.expect(t, !discover("tests/fixture-duplicate-slug"), "a duplicate slug is rejected")
 }
+
+@(test)
+test_sections_do_not_nest :: proc(t: ^testing.T) {
+	// blog/2024/nested.md got section "blog/2024", which matches neither
+	// BLOG_SECTION nor the blog section page, so it was built and crawlable
+	// and reachable from nowhere on the site.
+	testing.expect(t, !discover("tests/fixture-nested-section"), "a nested section is rejected")
+}
+
+@(test)
+test_a_section_needs_an_index :: proc(t: ^testing.T) {
+	// Every page in notes/ linked a breadcrumb to /notes/, which was never
+	// written because the directory had no _index.md.
+	testing.expect(t, !discover("tests/fixture-sectionless"), "a section without an index is rejected")
+}

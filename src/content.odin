@@ -102,8 +102,22 @@ walk_content :: proc(w: ^Website, dir: string, section: string) -> bool {
 
 	for entry in entries {
 		if entry.type == .Directory {
-			sub := section == "" ? entry.name : fmt.tprintf("%s/%s", section, entry.name)
-			walk_content(w, entry.fullpath, sub) or_return
+			// A section is one directory deep. Section membership is an exact
+			// comparison and a breadcrumb is two levels, so a page under
+			// blog/2024/ was built, put in the sitemap, and listed nowhere.
+			if section != "" {
+				fmt.eprintfln("ostat: %s: sections do not nest", entry.fullpath)
+				return false
+			}
+			walk_content(w, entry.fullpath, entry.name) or_return
+
+			// Checked after the walk, because the _index.md that answers it is
+			// one of the entries the walk just read. Without one there is no
+			// /<section>/ to write, and every page inside still links to it.
+			if entry.name not_in w.sections {
+				fmt.eprintfln("ostat: %s: a section needs an _index.md", entry.fullpath)
+				return false
+			}
 			continue
 		}
 		if !strings.has_suffix(entry.name, ".md") {
@@ -136,9 +150,9 @@ load_page :: proc(w: ^Website, path, name, section: string) -> bool {
 	p.title       = fm.title
 	p.description = fm.description
 	p.draft       = fm.draft
-	// Cloned, not aliased. A nested section name is a tprintf result and a
-	// derived slug points into the directory listing, both of which live in
-	// scratch — and a Page outlives scratch. Nothing here may point into it.
+	// Cloned, not aliased. A section name and a derived slug both point into
+	// the directory listing, which lives in scratch — and a Page outlives
+	// scratch. Nothing here may point into it.
 	p.section     = strings.clone(section, w.perm)
 	p.source      = strings.clone(path, w.perm)
 	p.body        = strings.clone(body, w.perm)
