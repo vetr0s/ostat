@@ -48,6 +48,11 @@ build_fixture :: proc(drafts := false, future := false) -> ^Website {
 		// golden comparison at once and say nothing about why.
 		panic("tests/fixture-site/site.json failed to load")
 	}
+	// Same reasoning: without this the fixture's home page and head would be
+	// the built-in placeholders, and the golden tree would pin those instead.
+	if !load_fragments(w) {
+		panic("tests/fixture-site/html failed to load")
+	}
 	return w
 }
 

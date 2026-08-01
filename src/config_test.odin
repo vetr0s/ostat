@@ -7,7 +7,7 @@ site.json, layered over the defaults.
 
 The merge is the whole point and is the part most likely to break silently: a
 key the file omits has to keep its default, or every site.json would have to
-restate the entire struct to avoid losing headings it never mentioned.
+restate the entire struct to avoid losing fields it never mentioned.
 */
 
 CONFIG_FIXTURE :: "tests/fixture-config"
@@ -39,13 +39,11 @@ test_site_config_overrides_only_what_it_names :: proc(t: ^testing.T) {
 	testing.expect_value(t, w.config.base_url, "https://configured.test/")
 	testing.expect_value(t, w.config.brand.accent, "ured")
 
-	// Named in neither the file nor its parent object, so both keep the default.
+	// Unnamed at the top level, and unnamed inside an object the file does
+	// name. The nested case is the one that would break silently: brand is
+	// written as { "accent": … } and head has to survive it.
 	testing.expect_value(t, w.config.locale, DEFAULT_SITE.locale)
-	testing.expect_value(t, w.config.home.elsewhere_heading, DEFAULT_SITE.home.elsewhere_heading)
-
-	// A slice the file does name is replaced outright, not appended to.
-	testing.expect_value(t, len(w.config.contact), 1)
-	testing.expect_value(t, w.config.contact[0].label, "email")
+	testing.expect_value(t, w.config.brand.head, DEFAULT_SITE.brand.head)
 }
 
 @(test)

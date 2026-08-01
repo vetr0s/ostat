@@ -131,51 +131,26 @@ write_header :: proc(w: ^Website, b: ^strings.Builder, p: ^Page) {
 	strings.write_string(b, "</nav>\n  ")
 }
 
+// The site's own document, with the recent posts dropped in where its marker
+// says. This was a layout: three sections in a fixed order, built out of four
+// config fields and three structs that existed only to be turned back into the
+// markup they started as. A fourth section meant editing this procedure.
+//
+// The marker is checked when the fragment is loaded, so it is here.
 @(private = "file")
 write_home :: proc(w: ^Website, b: ^strings.Builder) {
-	fmt.sbprintfln(b, `<section id="find-me">`+"\n"+`  <h1>%s</h1>`, html_escape(w.config.home.contact_heading, w.scratch))
+	before, _, after := strings.partition(w.fragments.home, RECENT_MARKER)
+	// The marker owns its line, so its indentation and its line break go with
+	// it. Otherwise an author who indents it the way the surrounding markup is
+	// indented gets that indentation on the first entry and a blank line after
+	// the last, and has to un-indent the marker to find out why.
+	before = strings.trim_right(before, " \t")
+	after = strings.trim_prefix(after, "\n")
 
-	// Optional: a site without an author photo should not emit a broken image.
-	if p := w.config.portrait; p.src != "" {
-		fmt.sbprintfln(
-			b,
-			`  <div class="portrait">`+"\n"+`    <img src="%s" alt="%s" width="%d" height="%d" />`+"\n"+`  </div>`,
-			html_escape(p.src, w.scratch),
-			html_escape(p.alt, w.scratch),
-			p.width,
-			p.height,
-		)
-	}
-	strings.write_string(b, "  <dl class=\"contact-list\">\n")
-	for c in w.config.contact {
-		fmt.sbprintfln(b, "    <dt>%s</dt>", html_escape(c.label, w.scratch))
-		fmt.sbprintfln(
-			b,
-			`    <dd><a href="%s">%s</a></dd>`,
-			html_escape(c.url, w.scratch),
-			html_escape(c.text, w.scratch),
-		)
-	}
-	strings.write_string(b, "  </dl>\n</section>\n\n")
-
-	fmt.sbprintfln(b, `<section id="elsewhere">`+"\n"+`  <h1>%s</h1>`+"\n"+`  <ul>`, html_escape(w.config.home.elsewhere_heading, w.scratch))
-	for link in w.config.elsewhere {
-		fmt.sbprintfln(
-			b,
-			`    <li><a href="%s">%s</a></li>`,
-			html_escape(link.url, w.scratch),
-			html_escape(link.label, w.scratch),
-		)
-	}
-	strings.write_string(b, "  </ul>\n</section>\n\n")
-
-	// Rendered even with nothing to list. The badge is the only way to the
-	// feed from this page, and an empty blog is when subscribing matters.
-	strings.write_string(b, "<section id=\"recent\">\n")
-	write_section_head(w, b, w.config.home.recent_heading, ROOT_FEED_PATH)
+	strings.write_string(b, before)
 	recent := w.articles[:min(HOME_RECENT_COUNT, len(w.articles))]
-	write_post_entries(w, b, recent, w.config.home.nothing_published)
-	strings.write_string(b, "</section>\n")
+	write_post_entries(w, b, recent, "Nothing published yet.")
+	strings.write_string(b, after)
 }
 
 @(private = "file")

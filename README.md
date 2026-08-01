@@ -73,8 +73,9 @@ site/
 ```
 
 A file named `_index.md` is its directory's section page. Any other `.md` file
-is a regular page. The home page has no file: it is the configuration plus the
-most recent posts.
+is a regular page. Sections are one directory deep, and a section directory
+needs an `_index.md`. The home page has no content file: it is `html/home.html`
+plus the most recent posts.
 
 A build also writes `sitemap.xml` and two feeds, `/index.xml` and
 `/blog/index.xml`, which carry the same items and differ only in the two URLs
@@ -146,15 +147,22 @@ distinguishes.
 ## Configuring it
 
 `site.json`, beside `content/`, holds a site's identity: title, base URL,
-author, the brand split, and the home page's links and headings. Every key is
-optional and what the file omits keeps its default, so one binary builds any
-number of sites. A site with no `site.json` still builds and says in its title
-that it is unconfigured.
+description, author, locale, and the brand split. Every key is optional and
+what the file omits keeps its default, so one binary builds any number of
+sites. A site with no `site.json` still builds and says in its title that it is
+unconfigured.
 
-Three things stay in the source deliberately: the shape of the layouts, in
-`render.odin`; the assets each page links, in `src/html/head.html`; and the CSS
-class names the generator writes, which pair with `site/static/css/style.css`.
-The comment at the top of `config.odin` is the authoritative map.
+`html/`, also beside `content/`, holds the documents: `home.html` is the front
+page, `header-01.html` and `header-02.html` are the two halves of every page's
+`<head>`, and `not-found-404.html` is the 404. Each is optional and falls back
+to a built-in default. `home.html` positions the generated list of recent posts
+with `<!--ostat:recent-->`, which is the one part of that page it does not
+write itself.
+
+Two things stay in the source deliberately: the shape of the remaining layouts,
+in `render.odin`, and the CSS class names the generator writes, which pair with
+`site/static/css/style.css`. The comment at the top of `config.odin` is the
+authoritative map.
 
 ## Layout
 
@@ -172,13 +180,15 @@ src/
   gfm.odin            tables and strikethrough
   highlight.odin      syntax highlighting
   render.odin         every layout, as a procedure
+  fragments.odin      the site's html/, over the built-in defaults
   feed.odin           RSS
   sitemap.odin        sitemap.xml
   text.odin           escaping, dates, truncation
-  html/               static chunks, pulled in with #load
+  html/               the default fragments, pulled in with #load
   *_test.odin         unit tests, beside what they test
 site/                 ostat's documentation, and the demo site
   site.json           its identity, like any other site's
+  html/home.html      its front page, like any other site's
 tests/
   fixture-site/       a site exercising every path
   golden/             its expected output, committed

@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "core:os"
+import "core:strings"
 
 /*
 The static markup a document is assembled from.
@@ -28,16 +29,24 @@ that could disagree with site.json would be a second place to say one thing.
 Fragments :: struct {
 	header_01: string,
 	header_02: string,
+	home:      string,
 	not_found: string,
 }
 
 FRAGMENT_DIR :: "html"
+
+// Where the home page's list of recent posts goes. That list is the one part
+// of that page ostat generates, so it is the one part the fragment cannot
+// write for itself. Everything around it, including the heading and the feed
+// badge, belongs to the site.
+RECENT_MARKER :: "<!--ostat:recent-->"
 
 // A variable rather than a constant, for the reason DEFAULT_SITE gives.
 @(rodata)
 DEFAULT_FRAGMENTS := Fragments {
 	header_01 = #load("html/header-01.html", string),
 	header_02 = #load("html/header-02.html", string),
+	home      = #load("html/home.html", string),
 	not_found = #load("html/not-found-404.html", string),
 }
 
@@ -55,6 +64,7 @@ load_fragments :: proc(w: ^Website) -> bool {
 	} {
 		{"header-01.html", &w.fragments.header_01},
 		{"header-02.html", &w.fragments.header_02},
+		{"home.html", &w.fragments.home},
 		{"not-found-404.html", &w.fragments.not_found},
 	}
 	for o in overrides {
@@ -68,6 +78,17 @@ load_fragments :: proc(w: ^Website) -> bool {
 			return false
 		}
 		o.into^ = string(src)
+	}
+
+	// Here rather than at render time. A home page whose recent posts have
+	// nowhere to go is a mistake in the file, and the file is what to name.
+	if !strings.contains(w.fragments.home, RECENT_MARKER) {
+		fmt.eprintfln(
+			"ostat: %s/home.html: no %s, so the recent posts have nowhere to go",
+			dir,
+			RECENT_MARKER,
+		)
+		return false
 	}
 	return true
 }

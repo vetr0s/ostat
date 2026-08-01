@@ -5,26 +5,5 @@
     "author": "ostat",
     "locale": "en-us",
 
-    "brand": { "head": "ostat", "accent": "" },
-
-    "contact": [
-        { "label": "source",  "text": "github.com/vetr0s/ostat",        "url": "https://github.com/vetr0s/ostat" },
-        { "label": "issues",  "text": "github.com/vetr0s/ostat/issues", "url": "https://github.com/vetr0s/ostat/issues" },
-        { "label": "licence", "text": "Unlicense",                      "url": "https://unlicense.org/" }
-    ],
-
-    "elsewhere": [
-        { "label": "install",     "url": "/install/" },
-        { "label": "writing",     "url": "/writing/" },
-        { "label": "configuring", "url": "/configuring/" },
-        { "label": "internals",   "url": "/internals/" },
-        { "label": "notes",       "url": "/blog/" }
-    ],
-
-    "home": {
-        "contact_heading": "ostat",
-        "elsewhere_heading": "Documentation",
-        "recent_heading": "Release Notes",
-        "nothing_published": "No releases yet."
-    }
+    "brand": { "head": "ostat", "accent": "" }
 }

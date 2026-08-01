@@ -7,9 +7,8 @@ import "core:os"
 /*
 One site's identity, in one struct.
 
-What lives here: everything about *which* site is being built — its name,
-address, author, the home page's copy and links, the section that holds posts.
-Change these and you get a different site.
+What lives here: the short facts about *which* site is being built — its name,
+address, author, locale, brand. Data, and genuinely data.
 
 The struct is filled from DEFAULT_SITE and then from <site-dir>/site.json, so
 one binary builds any number of sites. The defaults below name no real site:
@@ -18,11 +17,13 @@ ostat's own identity lives in site/site.json like anyone else's.
 
 What does not, and where to find it instead:
 
-  - The *shape* of the layouts, in render.odin. The home page has three
-    sections in a fixed order; a site wanting a fourth edits write_home. That
-    is the deliberate trade of "layouts are procedures, not templates".
-  - The assets each page links, in html/head.html. Favicons, the manifest, the
-    stylesheet and the font preload are markup, and they are #load-ed whole.
+  - The home page, and the markup around every page, in <site-dir>/html. Those
+    are documents. They used to be four fields here and three structs, which
+    meant the data model had to grow a field for every idea a home page might
+    have and render.odin had to grow a branch to draw it.
+  - The *shape* of the remaining layouts, in render.odin: the single page, the
+    section listing, the breadcrumb. That is the deliberate trade of "layouts
+    are procedures, not templates".
   - The CSS class names the generator writes, in notes.odin and highlight.odin.
     They are a contract with static/css/style.css and have to move together.
 
@@ -30,26 +31,6 @@ This comment used to claim nothing outside this file hardcoded a site's title,
 URL or navigation. That was false in four files, and a forker who believed it
 edited this struct and still shipped someone else's home page.
 */
-
-// A definition list entry: the label names the kind of address, the text is
-// what a reader sees, and they differ often enough to be separate fields.
-Contact :: struct {
-	label: string,
-	text:  string,
-	url:   string,
-}
-
-Link :: struct {
-	label: string,
-	url:   string,
-}
-
-Portrait :: struct {
-	src:    string,
-	alt:    string,
-	width:  int,
-	height: int,
-}
 
 // The title, split where the accent colour starts. Written out rather than
 // derived: the rule used to be "split at the first dot", which lives nowhere
@@ -59,15 +40,6 @@ Brand :: struct {
 	accent: string,
 }
 
-// The three headings on the home page. Copy, not structure — the sections
-// themselves are written in render.odin.
-Home_Copy :: struct {
-	contact_heading:   string,
-	elsewhere_heading: string,
-	recent_heading:    string,
-	nothing_published: string,
-}
-
 Site_Config :: struct {
 	base_url:    string,
 	title:       string,
@@ -75,12 +47,6 @@ Site_Config :: struct {
 	author:      string,
 	locale:      string,
 	brand:       Brand,
-
-	// The home page. Data, not markup.
-	portrait:    Portrait,
-	contact:     []Contact,
-	elsewhere:   []Link,
-	home:        Home_Copy,
 }
 
 // A variable, not a constant. A compile-time constant holding slice fields
@@ -104,12 +70,6 @@ DEFAULT_SITE := Site_Config {
 	author      = "",
 	locale      = "en-us",
 	brand       = {head = "unconfigured", accent = ""},
-	home        = {
-		contact_heading   = "Contact",
-		elsewhere_heading = "Elsewhere",
-		recent_heading    = "Recent",
-		nothing_published = "Nothing published yet.",
-	},
 }
 
 CONFIG_FILE :: "site.json"

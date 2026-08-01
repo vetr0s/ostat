@@ -1,8 +1,5 @@
 {
     "base_url": "https://configured.test/",
     "title": "Configured",
-    "brand": { "head": "Config", "accent": "ured" },
-    "contact": [
-        { "label": "email", "text": "someone@configured.test", "url": "mailto:someone@configured.test" }
-    ]
+    "brand": { "accent": "ured" }
 }

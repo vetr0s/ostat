@@ -5,30 +5,5 @@
     "author": "Fixture Author",
     "locale": "en-us",
 
-    "brand": { "head": "fixture", "accent": ".site" },
-
-    "portrait": {
-        "src": "/img/portrait.png",
-        "alt": "A portrait",
-        "width": 400,
-        "height": 400
-    },
-
-    "contact": [
-        { "label": "email",  "text": "someone@example.test", "url": "mailto:someone@example.test" },
-        { "label": "source", "text": "example.test/source",  "url": "https://example.test/source" }
-    ],
-
-    "elsewhere": [
-        { "label": "about",   "url": "/about/" },
-        { "label": "blog",    "url": "/blog/" },
-        { "label": "renamed", "url": "/custom-slug/" }
-    ],
-
-    "home": {
-        "contact_heading": "Find Me",
-        "elsewhere_heading": "Elsewhere",
-        "recent_heading": "Recent Posts",
-        "nothing_published": "Nothing published yet."
-    }
+    "brand": { "head": "fixture", "accent": ".site" }
 }
