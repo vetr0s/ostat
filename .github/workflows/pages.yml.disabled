@@ -1,5 +1,10 @@
 name: Deploy the documentation to GitHub Pages
 
+# DISABLED. ostat is archived and ostat.vetr0s.dev no longer resolves, so this
+# would deploy to a domain that is gone. Kept because the build it describes
+# still works and disabling it is meant to be reversible: rename it back to
+# pages.yml and repoint the domain.
+#
 # site/ is ostat's documentation, built by ostat. The generator is this
 # checkout rather than a pinned ref, which is the point: the docs describe the
 # commit that built them, and a change that breaks the build cannot be

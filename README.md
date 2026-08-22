@@ -1,5 +1,17 @@
 # ostat
 
+**Archived.** ostat built [vetr0s.dev](https://vetr0s.dev/) until August 2026,
+when that site moved to pandoc. Nothing runs it now. The documentation site at
+ostat.vetr0s.dev is gone and its DNS entry is removed.
+
+It works, and everything below is accurate. It is not maintained, and it should
+not be the generator you pick for a site you intend to keep.
+
+Why it was retired is written up at
+[vetr0s.dev/projects/ostat](https://vetr0s.dev/projects/ostat/). The short
+version: no template language means moving a heading is a recompile, and that
+trade stops being worth it once you have more generator than site.
+
 A static site generator written in [Odin](https://odin-lang.org/), modeled
 after the generator behind
 [gingerBill.org](https://github.com/gingerBill/gingerBill.org).
@@ -10,9 +22,11 @@ beside its content, but its shape is not configurable: that lives in
 `src/render.odin` and changing it means editing a procedure.
 
 The site in `site/` is ostat's own documentation, and building it is how the
-generator proves it works. It is published at
-[ostat.vetr0s.dev](https://ostat.vetr0s.dev/) from `main`, built by the commit
-that is being published rather than by a pinned release.
+generator proves it works. It used to be published from `main` by
+`.github/workflows/pages.yml`, built by the commit being published rather than
+by a pinned release. That workflow is now `pages.yml.disabled`, because the
+domain it deployed to no longer resolves. Build the docs locally with `./dev.sh`
+and read them there.
 
 ## Requirements
 
