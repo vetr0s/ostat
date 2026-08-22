@@ -27,9 +27,10 @@ sudo apt install libcmark-dev   # Debian, Ubuntu
 
 `build.sh` looks for the library in `/opt/homebrew/lib` and `/usr/local/lib`
 and passes the path to the linker. On Linux it usually finds nothing, which is
-correct: the library is already somewhere the linker looks. If the link fails —
-`library not found for -lcmark` on macOS, `cannot find -lcmark` on Linux —
-cmark is not installed, or is somewhere neither of those paths covers.
+correct: the library is already somewhere the linker looks. If the link fails,
+cmark is not installed, or is somewhere neither of those paths covers. The error
+reads `library not found for -lcmark` on macOS and `cannot find -lcmark` on
+Linux.
 
 ## Quick start
 
@@ -122,7 +123,7 @@ generator writes no numbers: the count comes from a CSS counter, so a note's
 number is the stylesheet's business.
 
 An unresolved marker is left as prose, because `[^` is ordinary text far more
-often than it is a note — a POSIX class like `[^a-z]` should not be one. A
+often than it is a note. A POSIX class like `[^a-z]` should not be one. A
 mistyped label is caught from the other side: the definition it was meant to
 reach goes unreferenced, and that fails the build.
 

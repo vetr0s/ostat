@@ -37,7 +37,7 @@ intermediate string live there.
 libcmark implements CommonMark and nothing else, so tables, strikethrough,
 margin notes and highlighting do not exist as far as it is concerned. Rather
 than post-process its output, ostat rewrites the source into raw HTML first and
-lets cmark pass it through — the same shape as gingerBill's
+lets cmark pass it through. That is the same shape as gingerBill's
 `preprocessor_pass_over_article`.
 
 That means the pass has to agree with cmark about **where code is**, and

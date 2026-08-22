@@ -6,7 +6,7 @@
 ---
 
 ostat has no template language: a site's layouts are procedures. A site is
-configured by two things beside `content/` — a `site.json` holding its
+configured by two things beside `content/`: a `site.json` holding its
 identity, and an `html/` directory holding its documents. One binary builds any
 number of sites.
 
@@ -99,7 +99,7 @@ Two things stay in the source, deliberately.
 **The shape of the remaining layouts**, in `render.odin`: the single page, the
 section listing, the breadcrumb. This is the trade "layouts are procedures"
 makes: no template language to learn, no partials to thread, and a compiler
-that checks the whole thing — at the cost of recompiling to move a heading.
+that checks the whole thing. The cost is recompiling to move a heading.
 
 **The class names the generator writes**, in `notes.odin` and
 `highlight.odin`. They are a contract with `static/css/style.css` and have to
@@ -108,7 +108,7 @@ change together.
 ## Adding a language
 
 `highlight.odin` holds a table. A lexer is a keyword list and a few
-delimiters — it produces only the seven token groups the stylesheet
+delimiters. It produces only the seven token groups the stylesheet
 distinguishes, and is deliberately approximate:
 
 ```odin
